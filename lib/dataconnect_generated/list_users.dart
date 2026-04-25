@@ -19,11 +19,15 @@ class ListUsersVariablesBuilder {
 @immutable
 class ListUsersUsers {
   final String id;
-  final String username;
+  final String? displayName;
+  final String? email;
+  final String? role;
   ListUsersUsers.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
-  username = nativeFromJson<String>(json['username']);
+  displayName = json['displayName'] == null ? null : nativeFromJson<String>(json['displayName']),
+  email = json['email'] == null ? null : nativeFromJson<String>(json['email']),
+  role = json['role'] == null ? null : nativeFromJson<String>(json['role']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -35,23 +39,35 @@ class ListUsersUsers {
 
     final ListUsersUsers otherTyped = other as ListUsersUsers;
     return id == otherTyped.id && 
-    username == otherTyped.username;
+    displayName == otherTyped.displayName && 
+    email == otherTyped.email && 
+    role == otherTyped.role;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, username.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, displayName.hashCode, email.hashCode, role.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     json['id'] = nativeToJson<String>(id);
-    json['username'] = nativeToJson<String>(username);
+    if (displayName != null) {
+      json['displayName'] = nativeToJson<String?>(displayName);
+    }
+    if (email != null) {
+      json['email'] = nativeToJson<String?>(email);
+    }
+    if (role != null) {
+      json['role'] = nativeToJson<String?>(role);
+    }
     return json;
   }
 
   ListUsersUsers({
     required this.id,
-    required this.username,
+    this.displayName,
+    this.email,
+    this.role,
   });
 }
 

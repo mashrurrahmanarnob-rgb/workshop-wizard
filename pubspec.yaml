@@ -32,11 +32,12 @@ dependencies:
     sdk: flutter
 
   # Add these two lines exactly with two spaces of indentation
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  firebase_data_connect: ^0.3.0
+  firebase_core: 4.7.0
+  firebase_auth: 6.4.0
+  firebase_data_connect: 0.3.0
+  firebase_crashlytics: 5.2.0
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
 
 dev_dependencies:
   flutter_test:
@@ -48,7 +49,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  firebase_auth_mocks: ^0.15.1
+  firebase_auth_mocks: 0.15.1
   google_sign_in_mocks: ^0.4.1
   mockito: ^5.6.4
 

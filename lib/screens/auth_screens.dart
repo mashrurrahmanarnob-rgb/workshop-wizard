@@ -4,7 +4,7 @@ import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const LoginScreen({Key? key, this.firebaseService}) : super(key: key);
+  const LoginScreen({super.key, this.firebaseService});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 10),
                           DropdownButtonFormField<String>(
-                            value: selectedRole,
+                            initialValue: selectedRole,
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: const Color(0xFFF5F6F8),
@@ -340,6 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               setState(() => _isLoading = false);
 
                               if (result['success']) {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
@@ -350,6 +351,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 );
                               } else {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
                                 );
@@ -408,7 +410,7 @@ class _RoleItem {
 
 class ForgotPasswordScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const ForgotPasswordScreen({Key? key, this.firebaseService}) : super(key: key);
+  const ForgotPasswordScreen({super.key, this.firebaseService});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -597,6 +599,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               setState(() => _isLoading = false);
 
                               if (result['success']) {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
@@ -607,6 +610,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   ),
                                 );
                               } else {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
                                 );
@@ -656,7 +660,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
 class CreateAccountScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const CreateAccountScreen({Key? key, this.firebaseService}) : super(key: key);
+  const CreateAccountScreen({super.key, this.firebaseService});
 
   @override
   State<CreateAccountScreen> createState() => _CreateAccountScreenState();
@@ -1008,6 +1012,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                               setState(() => _isLoading = false);
 
                               if (result['success']) {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
@@ -1018,6 +1023,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                   ),
                                 );
                               } else {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
                                 );

@@ -28,10 +28,10 @@ void main() {
 
     test('sign up fails with weak-password', () async {
       // For mock_exceptions/firebase_auth_mocks we might need to handle specific errors if the mock supports it
-      // Standard MockFirebaseAuth allows creating users. 
-      // To test failures, we can use a mock that throws or check if the mock supports exception triggering.
     });
-   group('FirebaseService - Login', () {
+  });
+
+  group('FirebaseService - Login', () {
     test('successful login', () async {
       // First create a user in the mock
       await mockAuth.createUserWithEmailAndPassword(
@@ -59,6 +59,5 @@ void main() {
       expect(result['success'], true);
       expect(result['message'], 'Password reset email sent! Check your inbox.');
     });
-  });
   });
 }

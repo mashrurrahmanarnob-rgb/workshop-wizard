@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../services/firebase_service.dart';
 import 'auth_screens.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String role;
-  const DashboardScreen({Key? key, required this.role}) : super(key: key);
+  const DashboardScreen({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +22,12 @@ class DashboardScreen extends StatelessWidget {
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               await FirebaseService().signOut();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
           ),
         ],
@@ -47,7 +50,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Welcome back,',
-                    style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 16),
                   ),
                   Text(
                     user?.displayName ?? 'User',
@@ -57,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -105,6 +108,14 @@ class DashboardScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
             ),
+            const SizedBox(height: 40),
+            // TEMPORARY: Button to trigger a test crash for initial sync
+            TextButton.icon(
+              onPressed: () => FirebaseCrashlytics.instance.crash(),
+              icon: const Icon(Icons.bug_report, color: Colors.red),
+              label: const Text('Trigger Test Crash', style: TextStyle(color: Colors.red)),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -124,7 +135,7 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -135,7 +146,7 @@ class DashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 28),

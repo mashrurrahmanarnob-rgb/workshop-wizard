@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "596925173469",
+    "project_id": "overflow-society",
+    "storage_bucket": "overflow-society.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:596925173469:android:edd37d189819663ddad534",
+        "android_client_info": {
+          "package_name": "com.VW.workshop_wizard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBP3QKca_znQ3WtLvAumf73YRTzeQXQSsk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

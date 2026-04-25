@@ -1,10 +1,12 @@
 part of 'generated.dart';
 
 class UpsertUserVariablesBuilder {
-  String username;
+  String displayName;
+  String email;
+  String role;
 
   final FirebaseDataConnect _dataConnect;
-  UpsertUserVariablesBuilder(this._dataConnect, {required  this.username,});
+  UpsertUserVariablesBuilder(this._dataConnect, {required  this.displayName,required  this.email,required  this.role,});
   Deserializer<UpsertUserData> dataDeserializer = (dynamic json)  => UpsertUserData.fromJson(jsonDecode(json));
   Serializer<UpsertUserVariables> varsSerializer = (UpsertUserVariables vars) => jsonEncode(vars.toJson());
   Future<OperationResult<UpsertUserData, UpsertUserVariables>> execute() {
@@ -12,7 +14,7 @@ class UpsertUserVariablesBuilder {
   }
 
   MutationRef<UpsertUserData, UpsertUserVariables> ref() {
-    UpsertUserVariables vars= UpsertUserVariables(username: username,);
+    UpsertUserVariables vars= UpsertUserVariables(displayName: displayName,email: email,role: role,);
     return _dataConnect.mutation("UpsertUser", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -87,11 +89,15 @@ class UpsertUserData {
 
 @immutable
 class UpsertUserVariables {
-  final String username;
+  final String displayName;
+  final String email;
+  final String role;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   UpsertUserVariables.fromJson(Map<String, dynamic> json):
   
-  username = nativeFromJson<String>(json['username']);
+  displayName = nativeFromJson<String>(json['displayName']),
+  email = nativeFromJson<String>(json['email']),
+  role = nativeFromJson<String>(json['role']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -102,21 +108,27 @@ class UpsertUserVariables {
     }
 
     final UpsertUserVariables otherTyped = other as UpsertUserVariables;
-    return username == otherTyped.username;
+    return displayName == otherTyped.displayName && 
+    email == otherTyped.email && 
+    role == otherTyped.role;
     
   }
   @override
-  int get hashCode => username.hashCode;
+  int get hashCode => Object.hashAll([displayName.hashCode, email.hashCode, role.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    json['username'] = nativeToJson<String>(username);
+    json['displayName'] = nativeToJson<String>(displayName);
+    json['email'] = nativeToJson<String>(email);
+    json['role'] = nativeToJson<String>(role);
     return json;
   }
 
   UpsertUserVariables({
-    required this.username,
+    required this.displayName,
+    required this.email,
+    required this.role,
   });
 }
 

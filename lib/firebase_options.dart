@@ -12,15 +12,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -34,33 +28,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_WEB_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_AUTH_DOMAIN',
-    databaseURL: 'YOUR_DATABASE_URL',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyAGMIFp7jpO8xkZ8EArWXDE87cHdF6nOyU',
+    appId: '1:596925173469:web:5e18878d7f893e56dad534',
+    messagingSenderId: '596925173469',
+    projectId: 'overflow-society',
+    authDomain: 'overflow-society.firebaseapp.com',
+    storageBucket: 'overflow-society.firebasestorage.app',
+    measurementId: 'G-Z1TXM513F7',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_ANDROID_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'YOUR_DATABASE_URL',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyBP3QKca_znQ3WtLvAumf73YRTzeQXQSsk',
+    appId: '1:596925173469:android:edd37d189819663ddad534',
+    messagingSenderId: '596925173469',
+    projectId: 'overflow-society',
+    storageBucket: 'overflow-society.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_IOS_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    databaseURL: 'YOUR_DATABASE_URL',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    iosBundleId: 'com.example.workshopWizard',
+    apiKey: 'AIzaSyA9DtpuEO45p7nEJf9sLv7Ugn3RExJdUgw',
+    appId: '1:596925173469:ios:61197384dfae64b7dad534',
+    messagingSenderId: '596925173469',
+    projectId: 'overflow-society',
+    storageBucket: 'overflow-society.firebasestorage.app',
+    iosBundleId: 'com.VW.workshopWizard',
   );
-}
 
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyA9DtpuEO45p7nEJf9sLv7Ugn3RExJdUgw',
+    appId: '1:596925173469:ios:61197384dfae64b7dad534',
+    messagingSenderId: '596925173469',
+    projectId: 'overflow-society',
+    storageBucket: 'overflow-society.firebasestorage.app',
+    iosBundleId: 'com.VW.workshopWizard',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAGMIFp7jpO8xkZ8EArWXDE87cHdF6nOyU',
+    appId: '1:596925173469:web:d861c5fbef0f485bdad534',
+    messagingSenderId: '596925173469',
+    projectId: 'overflow-society',
+    authDomain: 'overflow-society.firebaseapp.com',
+    storageBucket: 'overflow-society.firebasestorage.app',
+    measurementId: 'G-K5D0PK78QD',
+  );
+
+}

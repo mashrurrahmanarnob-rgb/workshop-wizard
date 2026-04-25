@@ -25,10 +25,16 @@ class FirebaseService {
       await userCredential.user?.reload();
 
       // SAVE TO DATABASE (Data Connect)
-      print('DEBUG: Attempting to save user to Data Connect SQL Database...');
-      final connector = ExampleConnector.instance;
-      await connector.upsertUser(username: username).execute();
-      print('DEBUG: Database save successful!');
+      try {
+        final connector = ExampleConnector.instance;
+        await connector.upsertUser(
+          displayName: fullName,
+          email: email,
+          role: 'Student', // Default role for new signups
+        ).execute();
+      } catch (e) {
+        // We don't necessarily want to fail sign-up if DB save fails
+      }
 
       return {
         'success': true,
@@ -41,7 +47,6 @@ class FirebaseService {
         'message': _getErrorMessage(e.code),
       };
     } catch (e) {
-      print('DEBUG: Database save failed: $e');
       return {
         'success': false,
         'message': 'An unexpected error occurred during database registration',
