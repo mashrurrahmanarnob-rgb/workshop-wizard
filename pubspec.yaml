@@ -31,8 +31,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  # Add these two lines exactly with two spaces of indentation
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  firebase_data_connect: ^0.3.0
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -45,19 +48,20 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  firebase_auth_mocks: ^0.15.1
+  google_sign_in_mocks: ^0.4.1
+  mockito: ^5.6.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/ieee_logo.png
+    - assets/
 
   # To add assets to your application, add an assets section, like this:
 

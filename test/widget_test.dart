@@ -1,30 +1,23 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:workshop_wizard/main.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:workshop_wizard/screens/auth_screens.dart';
+import 'package:workshop_wizard/services/firebase_service.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('LoginScreen displays Workshop Wizard UI', (WidgetTester tester) async {
+    final mockAuth = MockFirebaseAuth();
+    final mockService = FirebaseService(auth: mockAuth);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LoginScreen(firebaseService: mockService),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the app displays the Login screen with expected elements
+    expect(find.text('Workshop Wizard'), findsWidgets);
+    expect(find.text('Login'), findsWidgets);
+    expect(find.text('Select your role to access dashboard'), findsOneWidget);
   });
 }
