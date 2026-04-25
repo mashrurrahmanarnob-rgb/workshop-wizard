@@ -4,7 +4,7 @@ import 'auth_screens.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String role;
-  const DashboardScreen({Key? key, required this.role}) : super(key: key);
+  const DashboardScreen({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {

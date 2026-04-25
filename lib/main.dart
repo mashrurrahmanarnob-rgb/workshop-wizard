@@ -12,7 +12,7 @@ void main() async {
 }
 
 class WorkshopWizardApp extends StatelessWidget {
-  const WorkshopWizardApp({Key? key}) : super(key: key);
+  const WorkshopWizardApp({super.key});
 
   @override
   Widget build(BuildContext context) {

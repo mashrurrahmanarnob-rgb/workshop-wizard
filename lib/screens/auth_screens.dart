@@ -4,7 +4,7 @@ import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const LoginScreen({Key? key, this.firebaseService}) : super(key: key);
+  const LoginScreen({super.key, this.firebaseService});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -408,7 +408,7 @@ class _RoleItem {
 
 class ForgotPasswordScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const ForgotPasswordScreen({Key? key, this.firebaseService}) : super(key: key);
+  const ForgotPasswordScreen({super.key, this.firebaseService});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -656,7 +656,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
 class CreateAccountScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
-  const CreateAccountScreen({Key? key, this.firebaseService}) : super(key: key);
+  const CreateAccountScreen({super.key, this.firebaseService});
 
   @override
   State<CreateAccountScreen> createState() => _CreateAccountScreenState();
