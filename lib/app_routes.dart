@@ -17,14 +17,12 @@ class AppRoutes {
       forgotPassword: (context) => const ForgotPasswordScreen(),
       dashboard: (context) => const DashboardScreen(role: 'Student'),
       
-      // PLACEHOLDERS: Your teammates will replace these with their actual Screen classes
       committeeHome: (context) => const PlaceholderScreen(title: 'Committee Homepage'),
       proposals: (context) => const PlaceholderScreen(title: 'Proposals List'),
     };
   }
 }
 
-/// A temporary screen to be used until your teammates integrate their code.
 class PlaceholderScreen extends StatelessWidget {
   final String title;
   const PlaceholderScreen({super.key, required this.title});
@@ -45,14 +43,6 @@ class PlaceholderScreen extends StatelessWidget {
             Text(
               '$title is coming soon!',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Text(
-                'This is a placeholder. Team members should replace this route in app_routes.dart with their finished screen.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),

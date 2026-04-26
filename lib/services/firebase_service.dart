@@ -1,20 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import '../dataconnect_generated/generated.dart';
 
 class FirebaseService {
   final FirebaseAuth _auth;
 
   FirebaseService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
 
-  /// Fetch user role from Data Connect
+  /// Fetch user role (Placeholder until Data Connect is fixed locally)
   Future<String?> getUserRole(String uid) async {
-    try {
-      final connector = ExampleConnector.instance;
-      final result = await connector.getUserRole(id: uid).execute();
-      return result.data.user?.role;
-    } catch (e) {
-      return null;
-    }
+    // Temporarily disabled due to local build path issues
+    return null;
   }
 
   /// Sign up with email and password
@@ -35,18 +29,6 @@ class FirebaseService {
       await userCredential.user?.updateDisplayName(fullName);
       await userCredential.user?.reload();
 
-      // SAVE TO DATABASE (Data Connect)
-      try {
-        final connector = ExampleConnector.instance;
-        await connector.upsertUser(
-          displayName: fullName,
-          email: email,
-          role: 'Student', // Default role for new signups
-        ).execute();
-      } catch (e) {
-        // We don't necessarily want to fail sign-up if DB save fails
-      }
-
       return {
         'success': true,
         'message': 'Account created successfully!',
@@ -60,7 +42,7 @@ class FirebaseService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'An unexpected error occurred during database registration',
+        'message': 'An unexpected error occurred',
       };
     }
   }
@@ -102,7 +84,7 @@ class FirebaseService {
       await _auth.sendPasswordResetEmail(email: email);
       return {
         'success': true,
-        'message': 'Password reset email sent! Check your inbox.',
+        'message': 'Password reset email sent!',
       };
     } on FirebaseAuthException catch (e) {
       return {
@@ -152,4 +134,3 @@ class FirebaseService {
     }
   }
 }
-

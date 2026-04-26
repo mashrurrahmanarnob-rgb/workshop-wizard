@@ -688,13 +688,11 @@ class CreateAccountScreen extends StatefulWidget {
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   late TextEditingController _emailController;
   late TextEditingController _fullNameController;
-  late TextEditingController _usernameController;
   late TextEditingController _passwordController;
   late TextEditingController _repeatPasswordController;
   
   String _emailError = '';
   String _fullNameError = '';
-  String _usernameError = '';
   String _passwordError = '';
   String _repeatPasswordError = '';
   bool _isFormValid = false;
@@ -710,13 +708,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _firebaseService = widget.firebaseService ?? FirebaseService();
     _emailController = TextEditingController();
     _fullNameController = TextEditingController();
-    _usernameController = TextEditingController();
     _passwordController = TextEditingController();
     _repeatPasswordController = TextEditingController();
 
     _emailController.addListener(_validateForm);
     _fullNameController.addListener(_validateForm);
-    _usernameController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
     _repeatPasswordController.addListener(_validateForm);
   }
@@ -725,7 +721,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   void dispose() {
     _emailController.dispose();
     _fullNameController.dispose();
-    _usernameController.dispose();
     _passwordController.dispose();
     _repeatPasswordController.dispose();
     super.dispose();
@@ -748,12 +743,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         _fullNameError = '';
       }
 
-      if (_usernameController.text.isEmpty) {
-        _usernameError = 'Field must be filled';
-      } else {
-        _usernameError = '';
-      }
-
       if (_passwordController.text.isEmpty) {
         _passwordError = 'Field must be filled';
       } else {
@@ -770,12 +759,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
       _isFormValid = _emailError.isEmpty &&
           _fullNameError.isEmpty &&
-          _usernameError.isEmpty &&
           _passwordError.isEmpty &&
           _repeatPasswordError.isEmpty &&
           _emailController.text.isNotEmpty &&
           _fullNameController.text.isNotEmpty &&
-          _usernameController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty &&
           _repeatPasswordController.text.isNotEmpty;
     });
@@ -901,37 +888,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           ),
                           const SizedBox(height: 14),
                           TextField(
-                            controller: _usernameController,
-                            decoration: InputDecoration(
-                              hintText: 'Username',
-                              hintStyle: TextStyle(color: Colors.grey[400]),
-                              filled: true,
-                              fillColor: const Color(0xFFF5F6F8),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28),
-                                borderSide: BorderSide(
-                                  color: _usernameError.isNotEmpty ? Colors.red : Colors.grey.shade200,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28),
-                                borderSide: BorderSide(
-                                  color: _usernameError.isNotEmpty ? Colors.red : Colors.grey.shade200,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28),
-                                borderSide: BorderSide(
-                                  color: _usernameError.isNotEmpty ? Colors.red : const Color(0xFF4CAF50),
-                                  width: 2,
-                                ),
-                              ),
-                              errorText: _usernameError.isNotEmpty ? _usernameError : null,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          TextField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
@@ -1024,7 +980,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 email: _emailController.text.trim(),
                                 password: _passwordController.text,
                                 fullName: _fullNameController.text.trim(),
-                                username: _usernameController.text.trim(),
+                                username: '', // Field removed, sending empty for backward compatibility
                               );
 
                               if (!mounted) return;
