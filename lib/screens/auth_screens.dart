@@ -622,9 +622,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text('Reset link sent! Please check your email inbox.'),
+                                    content: const Text('Account created successfully! Please log in.'),
                                     backgroundColor: Colors.green,
-                                    duration: const Duration(seconds: 5),
+                                    duration: const Duration(seconds: 3),
                                   ),
                                 );
                                 Navigator.pop(context); // Return to login
@@ -990,9 +990,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text('Reset link sent! Please check your email inbox.'),
+                                    content: const Text('Account created successfully! Please log in.'),
                                     backgroundColor: Colors.green,
-                                    duration: const Duration(seconds: 5),
+                                    duration: const Duration(seconds: 3),
                                   ),
                                 );
                                 Navigator.pop(context); // Return to login
