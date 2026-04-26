@@ -36,7 +36,6 @@ class FirebaseService {
       await userCredential.user?.reload();
 
       // SAVE TO DATABASE (Data Connect)
-      /*
       try {
         final connector = ExampleConnector.instance;
         await connector.upsertUser(
@@ -47,7 +46,6 @@ class FirebaseService {
       } catch (e) {
         // We don't necessarily want to fail sign-up if DB save fails
       }
-      */
 
       return {
         'success': true,
