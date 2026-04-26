@@ -38,7 +38,6 @@ dependencies:
   firebase_crashlytics: 5.2.0
 
   cupertino_icons: ^1.0.9
-  firebase_data_connect: 0.3.0
 
 dev_dependencies:
   flutter_test:
