@@ -34,7 +34,7 @@ dependencies:
   # Add these two lines exactly with two spaces of indentation
   firebase_core: 4.7.0
   firebase_auth: 6.4.0
-  firebase_data_connect: 0.3.0
+  # firebase_data_connect: 0.3.0
   firebase_crashlytics: 5.2.0
 
   cupertino_icons: ^1.0.9

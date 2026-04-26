@@ -6,6 +6,17 @@ class FirebaseService {
 
   FirebaseService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
 
+  /// Fetch user role from Data Connect
+  Future<String?> getUserRole(String uid) async {
+    try {
+      final connector = ExampleConnector.instance;
+      final result = await connector.getUserRole(id: uid).execute();
+      return result.data.user?.role;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Sign up with email and password
   Future<Map<String, dynamic>> signUp({
     required String email,
@@ -25,6 +36,7 @@ class FirebaseService {
       await userCredential.user?.reload();
 
       // SAVE TO DATABASE (Data Connect)
+      /*
       try {
         final connector = ExampleConnector.instance;
         await connector.upsertUser(
@@ -35,6 +47,7 @@ class FirebaseService {
       } catch (e) {
         // We don't necessarily want to fail sign-up if DB save fails
       }
+      */
 
       return {
         'success': true,

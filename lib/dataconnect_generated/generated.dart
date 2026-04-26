@@ -9,6 +9,8 @@ part 'list_users.dart';
 
 part 'get_current_user.dart';
 
+part 'get_user_role.dart';
+
 
 
 
@@ -30,6 +32,11 @@ class ExampleConnector {
   
   GetCurrentUserVariablesBuilder getCurrentUser () {
     return GetCurrentUserVariablesBuilder(dataConnect, );
+  }
+  
+  
+  GetUserRoleVariablesBuilder getUserRole ({required String id, }) {
+    return GetUserRoleVariablesBuilder(dataConnect, id: id,);
   }
   
 

@@ -21,3 +21,10 @@ query GetCurrentUser @auth(level: USER) {
     contactNumber
   }
 }
+
+# NEW: Get role by UID for login verification
+query GetUserRole($id: String!) @auth(level: USER) {
+  user(key: { id: $id }) {
+    role
+  }
+}

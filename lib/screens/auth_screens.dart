@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/firebase_service.dart';
 import '../app_routes.dart';
-import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
@@ -339,6 +338,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               if (result['success']) {
                                 if (!context.mounted) return;
+                                
+                                // NEW: Verify the Role against the Database
+                                final user = result['user'];
+                                final actualRole = await _firebaseService.getUserRole(user.uid);
+                                
+                                if (!context.mounted) return;
+                                
+                                // If Data Connect is enabled and we found a role, verify it
+                                if (actualRole != null && actualRole != selectedRole) {
+                                  await _firebaseService.signOut();
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Access Denied: You are registered as $actualRole, not $selectedRole.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  setState(() => _isLoading = false);
+                                  return;
+                                }
+
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
@@ -539,7 +559,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           const SizedBox(height: 12),
                           const Center(
                             child: Text(
-                              "Enter your email and we'll send you a link to reset your password.",
+                              "Check your email and we'll send you a link to reset your password.",
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey, fontSize: 14),
                             ),
@@ -601,14 +621,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               if (result['success']) {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
-                                );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const DashboardScreen(role: 'Student'),
+                                  SnackBar(
+                                    content: const Text('Reset link sent! Please check your email inbox.'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 5),
                                   ),
                                 );
+                                Navigator.pop(context); // Return to login
                               } else {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1014,14 +1033,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                               if (result['success']) {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
-                                );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const DashboardScreen(role: 'Student'),
+                                  SnackBar(
+                                    content: const Text('Reset link sent! Please check your email inbox.'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 5),
                                   ),
                                 );
+                                Navigator.pop(context); // Return to login
                               } else {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
