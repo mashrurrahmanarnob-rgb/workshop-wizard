@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/firebase_service.dart';
+import '../app_routes.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -310,10 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
-                                );
+                                Navigator.pushNamed(context, AppRoutes.forgotPassword);
                               },
                               child: const Text('Forgot Password?', style: TextStyle(color: Colors.blue, fontSize: 13)),
                             ),
@@ -344,12 +342,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DashboardScreen(role: selectedRole),
-                                  ),
-                                );
+                                
+                                // ROLE-BASED ROUTING
+                                if (selectedRole == 'Committee Member') {
+                                  Navigator.pushReplacementNamed(context, AppRoutes.committeeHome);
+                                } else {
+                                  Navigator.pushReplacementNamed(
+                                    context, 
+                                    AppRoutes.dashboard,
+                                    arguments: selectedRole,
+                                  );
+                                }
                               } else {
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -377,10 +380,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const Text("Don't have an account? "),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const CreateAccountScreen()),
-                                    );
+                                    Navigator.pushNamed(context, AppRoutes.createAccount);
                                   },
                                   child: const Text('Create an account', style: TextStyle(decoration: TextDecoration.underline)),
                                 ),
