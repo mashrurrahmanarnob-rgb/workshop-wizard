@@ -11,7 +11,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String selectedRole = 'Student';
   bool _obscurePassword = true;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
@@ -20,14 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isFormValid = false;
   bool _isLoading = false;
   late final FirebaseService _firebaseService;
-  
-  final List<_RoleItem> roles = [
-    _RoleItem('Student', Colors.blue),
-    _RoleItem('Committee Member', Colors.purple),
-    _RoleItem('President', Colors.orange),
-    _RoleItem('Treasurer', Colors.green),
-    _RoleItem('Admin', Colors.red),
-  ];
 
   @override
   void initState() {
@@ -172,57 +163,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 6),
                           const Center(
                             child: Text(
-                              'Select your role to access dashboard',
+                              'Enter your credentials to access dashboard',
                               style: TextStyle(color: Colors.grey, fontSize: 14),
                             ),
                           ),
-                          const SizedBox(height: 18),
-                          Row(
-                            children: const [
-                              Icon(Icons.shield_outlined, color: Color(0xFF4CAF50)),
-                              SizedBox(width: 8),
-                              Text('Select Role', style: TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          DropdownButtonFormField<String>(
-                            initialValue: selectedRole,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFFF5F6F8),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28),
-                                borderSide: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(28),
-                                borderSide: BorderSide(color: Colors.grey.shade200),
-                              ),
-                            ),
-                            icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-                            items: roles.map((r) {
-                              return DropdownMenuItem<String>(
-                                value: r.label,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(color: r.color, shape: BoxShape.circle),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(r.label),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val == null) return;
-                              setState(() => selectedRole = val);
-                            },
-                          ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 32),
                           TextField(
                             controller: _emailController,
                             decoration: InputDecoration(
@@ -339,38 +284,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (result['success']) {
                                 if (!context.mounted) return;
                                 
-                                // NEW: Verify the Role against the Database
+                                // NEW: Verify the Role against the Database automatically
                                 final user = result['user'];
-                                final actualRole = await _firebaseService.getUserRole(user.uid);
+                                final actualRole = await _firebaseService.getUserRole(user.uid) ?? 'Student';
                                 
                                 if (!context.mounted) return;
                                 
-                                // If Data Connect is enabled and we found a role, verify it
-                                if (actualRole != null && actualRole != selectedRole) {
-                                  await _firebaseService.signOut();
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Access Denied: You are registered as $actualRole, not $selectedRole.'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  setState(() => _isLoading = false);
-                                  return;
-                                }
-
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(result['message']), backgroundColor: Colors.green),
                                 );
                                 
-                                // ROLE-BASED ROUTING
-                                if (selectedRole == 'Committee Member') {
+                                // ROLE-BASED ROUTING (Automatic)
+                                if (actualRole == 'Committee Member') {
                                   Navigator.pushReplacementNamed(context, AppRoutes.committeeHome);
                                 } else {
                                   Navigator.pushReplacementNamed(
                                     context, 
                                     AppRoutes.dashboard,
-                                    arguments: selectedRole,
+                                    arguments: actualRole,
                                   );
                                 }
                               } else {
@@ -389,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       valueColor: AlwaysStoppedAnimation(Colors.white),
                                     ),
                                   )
-                                : Text('Login as $selectedRole', style: const TextStyle(color: Colors.white)),
+                                : const Text('Login', style: TextStyle(color: Colors.white)),
                           ),
                           const SizedBox(height: 16),
                           Center(

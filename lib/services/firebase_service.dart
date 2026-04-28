@@ -1,17 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirebaseService {
   final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
 
-  FirebaseService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+  FirebaseService({FirebaseAuth? auth, FirebaseFirestore? db}) 
+      : _auth = auth ?? FirebaseAuth.instance,
+        _db = db ?? FirebaseFirestore.instance;
 
-  /// Fetch user role (Placeholder until Data Connect is fixed locally)
+  /// Fetch user role from Firestore
   Future<String?> getUserRole(String uid) async {
-    // Temporarily disabled due to local build path issues
-    return null;
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return doc.data()?['role'] as String?;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
-  /// Sign up with email and password
+  /// Sign up with email and password and save to Firestore
   Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
@@ -19,20 +30,36 @@ class FirebaseService {
     required String username,
   }) async {
     try {
-      // Create user account
+      // 1. Create user account in Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Update user profile with display name
-      await userCredential.user?.updateDisplayName(fullName);
-      await userCredential.user?.reload();
+      final user = userCredential.user;
+
+      if (user != null) {
+        // 2. Update Auth Profile
+        await user.updateDisplayName(fullName);
+        await user.reload();
+
+        // 3. Save to Firestore 'users' collection (Matching teammate's backend)
+        await _db.collection('users').doc(user.uid).set({
+          'id': user.uid,
+          'displayName': fullName,
+          'email': email,
+          'role': 'Student', // Default role for new signups
+          'createdAt': FieldValue.serverTimestamp(),
+          'bio': '',
+          'photoUrl': '',
+          'contactNumber': '',
+        });
+      }
 
       return {
         'success': true,
         'message': 'Account created successfully!',
-        'user': userCredential.user,
+        'user': user,
       };
     } on FirebaseAuthException catch (e) {
       return {
@@ -42,7 +69,7 @@ class FirebaseService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'An unexpected error occurred',
+        'message': 'An unexpected error occurred during registration',
       };
     }
   }
