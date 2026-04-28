@@ -55,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // Validate email format
-    final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(r'^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(email)) {
       _showSnackBar('Please enter a valid email address.', isError: true);
       return;
