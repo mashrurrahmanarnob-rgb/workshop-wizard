@@ -1,4 +1,4 @@
-package com.example.iees_adminpage
+package com.VW.workshop_wizard
 
 import io.flutter.embedding.android.FlutterActivity
 
