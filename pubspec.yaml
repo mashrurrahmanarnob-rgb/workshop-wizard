@@ -20,6 +20,7 @@ dependencies:
   # Teammate's UI Dependencies
   printing: ^5.14.3
   intl: ^0.20.2
+  pdf: ^3.12.0
 
 dev_dependencies:
   flutter_test:

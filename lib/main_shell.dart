@@ -8,6 +8,8 @@ import 'screens/president_home_screen.dart';
 import 'screens/committee_home_screen.dart';
 import 'screens/treasurer_home_screen.dart';
 import 'screens/role_management_screen.dart';
+import 'screens/submit_complaint_screen.dart';
+import 'screens/complaints_list_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 class _TabConfig {
@@ -63,6 +65,12 @@ class _MainShellState extends State<MainShell> {
             label: 'Home',
             screen: StudentHomeScreen(email: email),
           ),
+          _TabConfig(
+            icon: Icons.chat_bubble_outline,
+            activeIcon: Icons.chat_bubble,
+            label: 'Complain',
+            screen: SubmitComplaintScreen(email: email),
+          ),
           profileTab,
         ];
 
@@ -73,6 +81,12 @@ class _MainShellState extends State<MainShell> {
             activeIcon: Icons.description,
             label: 'Proposals',
             screen: PresidentProposalsScreen(role: role),
+          ),
+          _TabConfig(
+            icon: Icons.forum_outlined,
+            activeIcon: Icons.forum,
+            label: 'Complaints',
+            screen: const ComplaintsListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
@@ -96,6 +110,12 @@ class _MainShellState extends State<MainShell> {
             activeIcon: Icons.description,
             label: 'Proposals',
             screen: ProposalsScreen(role: role),
+          ),
+          _TabConfig(
+            icon: Icons.forum_outlined,
+            activeIcon: Icons.forum,
+            label: 'Complaints',
+            screen: const ComplaintsListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
