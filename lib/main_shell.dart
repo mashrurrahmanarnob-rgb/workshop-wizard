@@ -72,7 +72,7 @@ class _MainShellState extends State<MainShell> {
             icon: Icons.description_outlined,
             activeIcon: Icons.description,
             label: 'Proposals',
-            screen: ProposalsScreen(role: role),
+            screen: PresidentProposalsScreen(role: role),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
