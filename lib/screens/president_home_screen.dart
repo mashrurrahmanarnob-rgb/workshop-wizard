@@ -23,7 +23,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
   Future<Map<String, dynamic>> _fetchStats() async {
     final fs = FirebaseFirestore.instance;
 
-    // Pending proposals
+    // Proposals pending president review
     int pendingProposals = 0;
     try {
       final snap = await fs.collection('proposals')
@@ -32,14 +32,25 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
       pendingProposals = snap.count ?? 0;
     } catch (_) {}
 
-    // Total users
-    int totalUsers = 0;
+    // Proposals approved by president
+    int approvedProposals = 0;
     try {
-      final snap = await fs.collection('users').count().get();
-      totalUsers = snap.count ?? 0;
+      final snap = await fs.collection('proposals')
+          .where('status', isEqualTo: 'approved')
+          .count().get();
+      approvedProposals = snap.count ?? 0;
     } catch (_) {}
 
-    // Upcoming events
+    // Members only (exclude president from count)
+    int totalMembers = 0;
+    try {
+      final snap = await fs.collection('users')
+          .where('role', whereIn: ['student', 'committee', 'treasurer'])
+          .count().get();
+      totalMembers = snap.count ?? 0;
+    } catch (_) {}
+
+    // Upcoming events (auto-created from approved proposals)
     int upcomingEvents = 0;
     try {
       final snap = await fs.collection('events')
@@ -49,9 +60,10 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
     } catch (_) {}
 
     return {
-      'pendingProposals': pendingProposals,
-      'totalUsers':       totalUsers,
-      'upcomingEvents':   upcomingEvents,
+      'pendingProposals':  pendingProposals,
+      'approvedProposals': approvedProposals,
+      'totalMembers':      totalMembers,
+      'upcomingEvents':    upcomingEvents,
     };
   }
 
@@ -151,10 +163,11 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                 FutureBuilder<Map<String, dynamic>>(
                   future: _future,
                   builder: (ctx, snap) {
-                    final pending  = snap.data?['pendingProposals'] ?? '—';
-                    final users    = snap.data?['totalUsers']       ?? '—';
-                    final events   = snap.data?['upcomingEvents']   ?? '—';
                     final loading  = snap.connectionState == ConnectionState.waiting;
+                    final pending  = snap.data?['pendingProposals']  ?? '—';
+                    final approved = snap.data?['approvedProposals'] ?? '—';
+                    final members  = snap.data?['totalMembers']      ?? '—';
+                    final events   = snap.data?['upcomingEvents']    ?? '—';
 
                     return GridView.count(
                       crossAxisCount: 2,
@@ -165,14 +178,20 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                       childAspectRatio: 1.1,
                       children: [
                         _StatCard(
-                          label: 'Pending Proposals',
+                          label: 'Pending Review',
                           value: loading ? '…' : '$pending',
                           icon: Icons.pending_actions,
                           color: AppColors.president,
                         ),
                         _StatCard(
-                          label: 'Total Users',
-                          value: loading ? '…' : '$users',
+                          label: 'Approved',
+                          value: loading ? '…' : '$approved',
+                          icon: Icons.verified,
+                          color: AppColors.primary,
+                        ),
+                        _StatCard(
+                          label: 'Total Members',
+                          value: loading ? '…' : '$members',
                           icon: Icons.people_alt,
                           color: AppColors.student,
                         ),
@@ -180,12 +199,6 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                           label: 'Upcoming Events',
                           value: loading ? '…' : '$events',
                           icon: Icons.event,
-                          color: AppColors.primary,
-                        ),
-                        _StatCard(
-                          label: 'Approved',
-                          value: '—',
-                          icon: Icons.verified,
                           color: AppColors.committee,
                         ),
                       ],
@@ -199,7 +212,6 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
                 const SizedBox(height: 12),
 
-                // User management card
                 GestureDetector(
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const RoleManagementScreen(showBackButton: true))),
@@ -256,7 +268,7 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
   }
 }
 
-// ── Shared widgets used by all home screens ───────────────────────────────────
+// ── Stat card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final String label, value;
@@ -293,6 +305,8 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+// ── Recent activity list ──────────────────────────────────────────────────────
+
 class _RecentActivityList extends StatelessWidget {
   final Color roleColor;
   const _RecentActivityList({required this.roleColor});
@@ -300,9 +314,9 @@ class _RecentActivityList extends StatelessWidget {
   String _relativeTime(Timestamp? ts) {
     if (ts == null) return '';
     final diff = DateTime.now().difference(ts.toDate());
-    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 1)  return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inHours < 24)   return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
   }
 
@@ -323,13 +337,9 @@ class _RecentActivityList extends StatelessWidget {
           return Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.cardWhite,
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(color: AppColors.cardWhite, borderRadius: BorderRadius.circular(16)),
             child: const Center(
-              child: Text('No recent activity',
-                  style: TextStyle(color: AppColors.textMedium, fontSize: 13)),
+              child: Text('No recent activity', style: TextStyle(color: AppColors.textMedium, fontSize: 13)),
             ),
           );
         }
@@ -341,10 +351,10 @@ class _RecentActivityList extends StatelessWidget {
           ),
           child: Column(
             children: docs.asMap().entries.map((entry) {
-              final i    = entry.key;
-              final d    = entry.value.data() as Map<String, dynamic>;
-              final title   = d['title']     as String? ?? '';
-              final sub     = d['subtitle']  as String? ?? '';
+              final i       = entry.key;
+              final d       = entry.value.data() as Map<String, dynamic>;
+              final title   = d['title']    as String? ?? '';
+              final sub     = d['subtitle'] as String? ?? '';
               final timeStr = _relativeTime(d['createdAt'] as Timestamp?);
               return Column(
                 children: [

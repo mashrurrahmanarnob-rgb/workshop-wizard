@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/proposals_screen.dart';
 import 'screens/payments_screen.dart';
+import 'screens/events_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/student_home_screen.dart';
 import 'screens/president_home_screen.dart';
@@ -58,6 +59,12 @@ class _MainShellState extends State<MainShell> {
       case 'student':
         return [
           _TabConfig(
+            icon: Icons.event_outlined,
+            activeIcon: Icons.event,
+            label: 'Events',
+            screen: EventsScreen(email: email),
+          ),
+          _TabConfig(
             icon: Icons.home_outlined,
             activeIcon: Icons.home,
             label: 'Home',
@@ -72,7 +79,7 @@ class _MainShellState extends State<MainShell> {
             icon: Icons.description_outlined,
             activeIcon: Icons.description,
             label: 'Proposals',
-            screen: PresidentProposalsScreen(role: role),
+            screen: const PresidentProposalsScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
