@@ -1,1 +1,5 @@
-{"emulators":{"dataconnect":{"dataDir":"dataconnect/.dataconnect/pgliteData"}},"dataconnect":{"source":"dataconnect"},"flutter":{"platforms":{"android":{"default":{"projectId":"overflow-society","appId":"1:596925173469:android:edd37d189819663ddad534","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"overflow-society","configurations":{"android":"1:596925173469:android:edd37d189819663ddad534","ios":"1:596925173469:ios:61197384dfae64b7dad534","macos":"1:596925173469:ios:61197384dfae64b7dad534","web":"1:596925173469:web:5e18878d7f893e56dad534","windows":"1:596925173469:web:d861c5fbef0f485bdad534"}}}}}}
+{
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  }
+}

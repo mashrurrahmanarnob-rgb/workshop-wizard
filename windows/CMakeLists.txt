@@ -1,10 +1,10 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(workshop_wizard LANGUAGES CXX)
+project(iees_adminpage LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "workshop_wizard")
+set(BINARY_NAME "iees_adminpage")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

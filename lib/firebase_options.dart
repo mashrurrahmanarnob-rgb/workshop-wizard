@@ -1,5 +1,9 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+// Firebase config for Workshop Wizard – IEEE PES UTM
+// Project: overflow-society (Firebase console)
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
@@ -72,5 +76,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'overflow-society.firebasestorage.app',
     measurementId: 'G-K5D0PK78QD',
   );
-
 }

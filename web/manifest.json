@@ -1,6 +1,6 @@
 {
-    "name": "workshop_wizard",
-    "short_name": "workshop_wizard",
+    "name": "iees_adminpage",
+    "short_name": "iees_adminpage",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
