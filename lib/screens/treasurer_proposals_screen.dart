@@ -7,6 +7,14 @@ import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 import '../services/activity_service.dart';
 
+// Local date formatter replicated from proposals_screen.dart
+String _formatDate(Timestamp? ts) {
+  if (ts == null) return 'Not submitted';
+  final d = ts.toDate();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return '${d.day} ${months[d.month - 1]} ${d.year}';
+}
+
 class TreasurerProposalsScreen extends StatefulWidget {
   final String role;
   const TreasurerProposalsScreen({super.key, required this.role});
