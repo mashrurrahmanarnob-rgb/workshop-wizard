@@ -682,17 +682,26 @@ class CreateProposalScreen extends StatefulWidget {
 class _CreateProposalScreenState extends State<CreateProposalScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _learningCtrl = TextEditingController();
+  final _audienceCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
   final _budgetCtrl = TextEditingController(text: '0.00');
+  final _durationCtrl = TextEditingController(text: '3');
   final _maxPartCtrl = TextEditingController(text: '50');
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  String? _signatureData; // placeholder for captured signature
   bool _saving = false;
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _learningCtrl.dispose();
+    _audienceCtrl.dispose();
     _locationCtrl.dispose();
     _budgetCtrl.dispose();
+    _durationCtrl.dispose();
     _maxPartCtrl.dispose();
     super.dispose();
   }
@@ -728,20 +737,34 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
     setState(() => _saving = true);
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final now = Timestamp.now();
+
+      // Build chosen date/time if provided
+      DateTime? chosen;
+      if (_selectedDate != null) {
+        chosen = _selectedDate!;
+        if (_selectedTime != null) {
+          chosen = DateTime(chosen.year, chosen.month, chosen.day, _selectedTime!.hour, _selectedTime!.minute);
+        }
+      }
+      final ts = chosen != null ? Timestamp.fromDate(chosen) : Timestamp.now();
+
       await FirebaseFirestore.instance.collection('proposals').add({
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
+        'learningObjectives': _learningCtrl.text.trim(),
+        'targetAudience': _audienceCtrl.text.trim(),
         'location': _locationCtrl.text.trim(),
         'budget': double.tryParse(_budgetCtrl.text) ?? 0,
+        'durationHours': double.tryParse(_durationCtrl.text) ?? 0,
         'maxParticipants': int.tryParse(_maxPartCtrl.text) ?? 50,
         'status': asDraft ? 'draft' : 'in_review',
         'createdBy': uid,
         'createdAt': FieldValue.serverTimestamp(),
-        // FIX: Only set date when actually submitting, not for drafts
-        'date': asDraft ? null : now,
+        // Only set date when actually submitting
+        'date': asDraft ? null : ts,
+        'signature': _signatureData ?? '',
       });
-      // FIX: Only log activity for actual submissions, not drafts
+      // Log activity for actual submissions only
       if (!asDraft) {
         await logActivity(
             'New proposal submitted', _titleCtrl.text.trim());
@@ -823,58 +846,133 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
                       _field(_titleCtrl, 'e.g., PCB Soldering Workshop'),
                       const SizedBox(height: 16),
                       _label('Description *'),
-                      _field(
-                          _descCtrl, 'Describe the workshop objectives...',
-                          maxLines: 4),
+                      _field(_descCtrl, 'Brief overview of the workshop...', maxLines: 4),
+                      const SizedBox(height: 16),
+                      _label('Learning Objectives *'),
+                      _field(_learningCtrl, 'What will participants learn from this workshop?', maxLines: 3),
+                      const SizedBox(height: 16),
+                      _label('Target Audience *'),
+                      _field(_audienceCtrl, 'e.g., Engineering students, All years'),
+                      const SizedBox(height: 16),
+
+                      Row(children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Date *'),
+                              GestureDetector(
+                                onTap: () async {
+                                  final d = await showDatePicker(
+                                    context: context,
+                                    initialDate: _selectedDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (d != null) setState(() => _selectedDate = d);
+                                },
+                                child: AbsorbPointer(
+                                  child: TextField(
+                                    controller: TextEditingController(text: _selectedDate == null ? '' : '${_selectedDate!.month}/${_selectedDate!.day}/${_selectedDate!.year}'),
+                                    decoration: const InputDecoration(hintText: 'mm/dd/yyyy', hintStyle: TextStyle(color: AppColors.textLight)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Time *'),
+                              GestureDetector(
+                                onTap: () async {
+                                  final t = await showTimePicker(
+                                    context: context,
+                                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                                  );
+                                  if (t != null) setState(() => _selectedTime = t);
+                                },
+                                child: AbsorbPointer(
+                                  child: TextField(
+                                    controller: TextEditingController(text: _selectedTime == null ? '' : _selectedTime!.format(context)),
+                                    decoration: const InputDecoration(hintText: '--:-- --', hintStyle: TextStyle(color: AppColors.textLight)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
+
                       const SizedBox(height: 16),
                       Row(children: [
                         Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _label('Budget (RM) *'),
-                                  _field(_budgetCtrl, '0.00',
-                                      keyboardType: TextInputType.number)
-                                ])),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Duration (hours) *'),
+                              _field(_durationCtrl, 'e.g., 3', keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _label('Max Participants *'),
-                                  _field(_maxPartCtrl, '50',
-                                      keyboardType: TextInputType.number)
-                                ])),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Expected Participants *'),
+                              _field(_maxPartCtrl, '50', keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
                       ]),
+
                       const SizedBox(height: 16),
                       _label('Location *'),
                       _field(_locationCtrl, 'e.g., Engineering Lab 3'),
                       const SizedBox(height: 24),
-                      SizedBox(
+
+                      _label('Digital Signature *'),
+                      Container(
+                        height: 120,
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed:
-                          _saving ? null : () => _submit(asDraft: false),
-                          child: _saving
-                              ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(
-                                      Colors.white)))
-                              : const Text('Submit Proposal'),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.textLight.withValues(alpha: 0.3)),
+                        ),
+                        child: Center(
+                          child: Text('Sign below with your mouse or finger', style: TextStyle(color: AppColors.textLight)),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed:
-                          _saving ? null : () => _submit(asDraft: true),
-                          child: const Text('Save as Draft'),
-                        ),
+
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _saving ? null : () => _submit(asDraft: false),
+                              child: _saving
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+                                  : const Text('Submit Proposal'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
