@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:signature/signature.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 import '../services/activity_service.dart';
@@ -690,7 +692,13 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
   final _maxPartCtrl = TextEditingController(text: '50');
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  String? _signatureData; // placeholder for captured signature
+  String? _signatureData; // base64 PNG of committee signature
+  // Signature controller
+  final SignatureController _sigController = SignatureController(
+    penStrokeWidth: 2,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
   bool _saving = false;
 
   @override
@@ -703,6 +711,7 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
     _budgetCtrl.dispose();
     _durationCtrl.dispose();
     _maxPartCtrl.dispose();
+    _sigController.dispose();
     super.dispose();
   }
 
@@ -738,6 +747,14 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
 
+      // capture signature PNG if any
+      try {
+        final png = await _sigController.toPngBytes();
+        if (png != null) {
+          _signatureData = base64Encode(png);
+        }
+      } catch (_) {}
+
       // Build chosen date/time if provided
       DateTime? chosen;
       if (_selectedDate != null) {
@@ -762,7 +779,7 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         // Only set date when actually submitting
         'date': asDraft ? null : ts,
-        'signature': _signatureData ?? '',
+        'committeeSignature': _signatureData ?? '',
       });
       // Log activity for actual submissions only
       if (!asDraft) {
@@ -937,15 +954,47 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
 
                       _label('Digital Signature *'),
                       Container(
-                        height: 120,
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
+                        height: 160,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: AppColors.textLight.withValues(alpha: 0.3)),
                         ),
-                        child: Center(
-                          child: Text('Sign below with your mouse or finger', style: TextStyle(color: AppColors.textLight)),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Signature(
+                                controller: _sigController,
+                                backgroundColor: Colors.white,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _sigController.clear();
+                                          _signatureData = null;
+                                        });
+                                      },
+                                      child: const Text('Clear')),
+                                  TextButton(
+                                      onPressed: () async {
+                                        final png = await _sigController.toPngBytes();
+                                        if (png != null) {
+                                          setState(() {
+                                            _signatureData = base64Encode(png);
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signature captured')));
+                                        }
+                                      },
+                                      child: const Text('Save Signature')),
+                                ],
+                              ),
+                            )
+                          ],
                         ),
                       ),
 
@@ -1684,47 +1733,73 @@ class _PresidentProposalCard extends StatelessWidget {
     if (confirm != true) return;
 
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      final proposalRef = FirebaseFirestore.instance
-          .collection('proposals')
-          .doc(id);
+      // Fetch latest proposal snapshot to validate state/budget
+      final propSnap = await FirebaseFirestore.instance.collection('proposals').doc(id).get();
+      if (!propSnap.exists) {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proposal not found')));
+        return;
+      }
+      final propData = propSnap.data()!;
+      final currentStatus = propData['status'] as String? ?? 'draft';
 
-      // 1. Update proposal status to approved
+      // Ensure treasurer signed first
+      if (currentStatus != 'treasurer_signed') {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Treasurer must sign before President approval')));
+        return;
+      }
+
+      final budgetNeeded = (propData['budget'] as num?)?.toDouble() ?? 0.0;
+      // Check treasury available funds (document: treasury/funds -> { available: number })
+      final treasuryRef = FirebaseFirestore.instance.collection('treasury').doc('funds');
+      final treasurySnap = await treasuryRef.get();
+      final available = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 0.0;
+      if (budgetNeeded > available) {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient funds. Cannot approve.')));
+        return;
+      }
+
+      final batch = FirebaseFirestore.instance.batch();
+      final proposalRef = FirebaseFirestore.instance.collection('proposals').doc(id);
+
+      // 1. Update proposal status to approved and record president info
       batch.update(proposalRef, {
         'status': 'approved',
         'approvedAt': FieldValue.serverTimestamp(),
+        'presidentApprovedBy': FirebaseAuth.instance.currentUser?.uid,
+        'presidentApprovedAt': FieldValue.serverTimestamp(),
       });
 
-      // 2. Auto-create event from proposal data
-      final eventRef =
-      FirebaseFirestore.instance.collection('events').doc();
+      // 2. Deduct budget from treasury
+      batch.update(treasuryRef, {
+        'available': FieldValue.increment(-budgetNeeded),
+      });
+
+      // 3. Auto-create event from proposal data
+      final eventRef = FirebaseFirestore.instance.collection('events').doc();
       batch.set(eventRef, {
-        'title': data['title'] ?? '',
-        'description': data['description'] ?? '',
-        'location': data['location'] ?? '',
-        'budget': data['budget'] ?? 0,
-        'maxParticipants': data['maxParticipants'] ?? 50,
+        'title': propData['title'] ?? '',
+        'description': propData['description'] ?? '',
+        'location': propData['location'] ?? '',
+        'budget': propData['budget'] ?? 0,
+        'maxParticipants': propData['maxParticipants'] ?? 50,
         'status': 'upcoming',
         'proposalId': id,
-        'createdBy': data['createdBy'],
-        'date': data['date'] ?? FieldValue.serverTimestamp(),
+        'createdBy': propData['createdBy'],
+        'date': propData['date'] ?? FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
         'registrationCount': 0,
       });
 
       await batch.commit();
-      await logActivity('Proposal approved',
-          '${data['title']} — event created automatically');
+
+      await logActivity('Proposal approved', '${propData['title']} — event created automatically');
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content:
-            Text('Proposal approved and event created successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proposal approved and event created successfully')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
