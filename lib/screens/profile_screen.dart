@@ -102,12 +102,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _showEditDialog(_ProfileData profile) async {
     final nameCtrl  = TextEditingController(text: profile.fullName);
     final phoneCtrl = TextEditingController(text: profile.phoneNumber);
+    bool saving = false;
 
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlg) {
-          bool saving = false;
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text('Edit Profile',

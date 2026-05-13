@@ -161,8 +161,6 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
                     final treasuryAvailable = snap.data?['treasuryAvailable'] ?? 0.0;
                     final verified  = snap.data?['verified']       ?? '—';
                     final pending   = snap.data?['pending']        ?? '—';
-                    final workshops = snap.data?['workshops']      ?? '—';
-
                     return GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,

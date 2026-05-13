@@ -185,7 +185,7 @@ class ProposalsScreen extends StatelessWidget {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: docs.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                     const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final d =
@@ -696,7 +696,7 @@ class _SignatureDialogState extends State<_SignatureDialog> {
           onPressed: () async {
             if (_controller.isEmpty) return;
             final bytes = await _controller.toPngBytes();
-            if (bytes != null && mounted) {
+            if (bytes != null && context.mounted) {
               Navigator.pop(context, base64Encode(bytes));
             }
           },
@@ -1038,7 +1038,7 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
                                   TextButton(
                                       onPressed: () async {
                                         final png = await _sigController.toPngBytes();
-                                        if (png != null) {
+                                        if (png != null && context.mounted) {
                                           setState(() {
                                             _signatureData = base64Encode(png);
                                           });
@@ -1618,7 +1618,7 @@ class _PresidentProposalsScreenState
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: docs.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                     const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final d =
@@ -1645,22 +1645,6 @@ class _PresidentProposalCard extends StatelessWidget {
   final String id;
   final Map<String, dynamic> data;
   const _PresidentProposalCard({required this.id, required this.data});
-
-  Future<String> _getSubmitterName() async {
-    final uid = data['createdBy'] as String?;
-    if (uid == null) return 'Unknown';
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      return doc.data()?['name'] as String? ??
-          doc.data()?['email'] as String? ??
-          'Unknown';
-    } catch (_) {
-      return 'Unknown';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

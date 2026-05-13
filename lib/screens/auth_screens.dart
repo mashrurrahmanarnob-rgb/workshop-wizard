@@ -353,12 +353,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _RoleItem {
-  final String label;
-  final Color color;
-  const _RoleItem(this.label, this.color);
-}
-
 class ForgotPasswordScreen extends StatefulWidget {
   final FirebaseService? firebaseService;
   const ForgotPasswordScreen({super.key, this.firebaseService});

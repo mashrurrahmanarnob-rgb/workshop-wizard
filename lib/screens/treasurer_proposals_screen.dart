@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import '../theme/app_theme.dart';
-import '../widgets/shared_widgets.dart';
 import '../services/activity_service.dart';
 
 // Local date formatter replicated from proposals_screen.dart
@@ -63,7 +62,7 @@ class _TreasurerProposalsScreenState extends State<TreasurerProposalsScreen> {
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: docs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final d = docs[i].data() as Map<String, dynamic>;
                       final id = docs[i].id;

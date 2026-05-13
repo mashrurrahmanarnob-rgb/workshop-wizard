@@ -64,7 +64,7 @@ class EventsScreen extends StatelessWidget {
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: regs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final reg = regs[i].data() as Map<String, dynamic>;
                       final eventId = reg['eventId'] as String? ?? '';

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> logActivity(String title, String subtitle) async {
   try {
@@ -9,6 +10,6 @@ Future<void> logActivity(String title, String subtitle) async {
     });
   } catch (e) {
     // Silently handle errors for activity logging so it doesn't crash the main flow
-    print('Error logging activity: $e');
+    debugPrint('Error logging activity: $e');
   }
 }

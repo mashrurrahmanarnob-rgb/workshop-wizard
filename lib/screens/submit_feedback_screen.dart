@@ -112,7 +112,7 @@ class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
             const Text('Category *', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               hint: const Text('Select a category'),
               items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
