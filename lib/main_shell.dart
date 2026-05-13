@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/proposals_screen.dart';
-import 'screens/treasurer_proposals_screen.dart';
 import 'screens/payments_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/student_home_screen.dart';
@@ -11,7 +10,6 @@ import 'screens/treasurer_home_screen.dart';
 import 'screens/role_management_screen.dart';
 import 'screens/submit_feedback_screen.dart';
 import 'screens/feedback_list_screen.dart';
-import 'screens/president_proposals_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 class _TabConfig {
@@ -130,12 +128,6 @@ class _MainShellState extends State<MainShell> {
 
       case 'treasurer':
         return [
-          _TabConfig(
-            icon: Icons.description_outlined,
-            activeIcon: Icons.description,
-            label: 'Proposals',
-            screen: TreasurerProposalsScreen(role: role),
-          ),
           _TabConfig(
             icon: Icons.home_outlined,
             activeIcon: Icons.home,

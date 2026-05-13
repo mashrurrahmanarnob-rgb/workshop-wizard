@@ -551,33 +551,19 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
                           const SizedBox(height: 20),
                           ApprovalStepTile(
                               title: 'Faculty Advisor',
-                              subtitle: widget.status == 'approved'
+                              subtitle: (widget.status == 'Approved' || widget.status == 'approved')
                                   ? 'Approved'
                                   : 'Pending',
-                              isCompleted: widget.status == 'approved',
+                              isCompleted: (widget.status == 'Approved' || widget.status == 'approved'),
                               isLast: false),
                           ApprovalStepTile(
                               title: 'Club President',
-                              subtitle: widget.status == 'approved'
+                              subtitle: (widget.status == 'Approved' || widget.status == 'approved')
                                   ? 'Approved'
                                   : widget.status == 'rejected'
                                   ? 'Rejected'
                                   : 'Pending',
-                              isCompleted: widget.status == 'approved',
-                              isLast: false),
-                          ApprovalStepTile(
-                              title: 'FKE Office',
-                              subtitle: widget.status == 'approved'
-                                  ? 'Approved'
-                                  : 'Pending',
-                              isCompleted: widget.status == 'approved',
-                              isLast: false),
-                          ApprovalStepTile(
-                              title: 'HEP Student Affairs',
-                              subtitle: widget.status == 'approved'
-                                  ? 'Approved'
-                                  : 'Pending',
-                              isCompleted: widget.status == 'approved',
+                              isCompleted: (widget.status == 'Approved' || widget.status == 'approved'),
                               isLast: true),
                         ],
                       ),
@@ -668,6 +654,56 @@ class _RejectionReasonWidget extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SignatureDialog extends StatefulWidget {
+  final String title;
+  const _SignatureDialog({required this.title});
+
+  @override
+  State<_SignatureDialog> createState() => _SignatureDialogState();
+}
+
+class _SignatureDialogState extends State<_SignatureDialog> {
+  final SignatureController _controller = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      content: Container(
+        height: 200,
+        width: double.maxFinite,
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+        child: Signature(controller: _controller, backgroundColor: Colors.white),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => _controller.clear(), child: const Text('Clear', style: TextStyle(color: Colors.red))),
+        ElevatedButton(
+          onPressed: () async {
+            if (_controller.isEmpty) return;
+            final bytes = await _controller.toPngBytes();
+            if (bytes != null && mounted) {
+              Navigator.pop(context, base64Encode(bytes));
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: const Text('Approve & Sign'),
+        ),
+      ],
     );
   }
 }
@@ -948,8 +984,27 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
                       ]),
 
                       const SizedBox(height: 16),
-                      _label('Location *'),
-                      _field(_locationCtrl, 'e.g., Engineering Lab 3'),
+                      Row(children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Expected Budget (RM) *'),
+                              _field(_budgetCtrl, 'e.g., 500.00', keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Location *'),
+                              _field(_locationCtrl, 'e.g., Engineering Lab 3'),
+                            ],
+                          ),
+                        ),
+                      ]),
                       const SizedBox(height: 24),
 
                       _label('Digital Signature *'),
@@ -1742,9 +1797,9 @@ class _PresidentProposalCard extends StatelessWidget {
       final propData = propSnap.data()!;
       final currentStatus = propData['status'] as String? ?? 'draft';
 
-      // Ensure treasurer signed first
-      if (currentStatus != 'treasurer_signed') {
-        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Treasurer must sign before President approval')));
+      // 1. Direct Approval (Removing Treasurer bottleneck as requested)
+      if (currentStatus != 'Pending' && currentStatus != 'in_review') {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This proposal is not awaiting approval')));
         return;
       }
 
@@ -1752,27 +1807,48 @@ class _PresidentProposalCard extends StatelessWidget {
       // Check treasury available funds (document: treasury/funds -> { available: number })
       final treasuryRef = FirebaseFirestore.instance.collection('treasury').doc('funds');
       final treasurySnap = await treasuryRef.get();
-      final available = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 0.0;
+      
+      // Default to RM 10,000 if document doesn't exist for the demo
+      final available = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 10000.0;
+
       if (budgetNeeded > available) {
-        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient funds. Cannot approve.')));
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Not Enough Budget', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              content: Text('This proposal requires RM $budgetNeeded, but the Treasury only has RM $available remaining.\n\nApproval blocked to prevent deficit.'),
+              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+            ),
+          );
+        }
         return;
       }
+
+      // 2. Request President's Signature
+      if (!context.mounted) return;
+      final presidentSig = await showDialog<String>(
+        context: context,
+        builder: (ctx) => _SignatureDialog(title: 'President Approval Signature'),
+      );
+
+      if (presidentSig == null) return;
 
       final batch = FirebaseFirestore.instance.batch();
       final proposalRef = FirebaseFirestore.instance.collection('proposals').doc(id);
 
-      // 1. Update proposal status to approved and record president info
+      // 3. Update proposal status and record president info
       batch.update(proposalRef, {
         'status': 'approved',
         'approvedAt': FieldValue.serverTimestamp(),
-        'presidentApprovedBy': FirebaseAuth.instance.currentUser?.uid,
-        'presidentApprovedAt': FieldValue.serverTimestamp(),
+        'presidentSignature': presidentSig,
+        'presidentUid': FirebaseAuth.instance.currentUser?.uid,
       });
 
-      // 2. Deduct budget from treasury
-      batch.update(treasuryRef, {
+      // 2. Deduct budget from treasury (create doc if it doesn't exist)
+      batch.set(treasuryRef, {
         'available': FieldValue.increment(-budgetNeeded),
-      });
+      }, SetOptions(merge: true));
 
       // 3. Auto-create event from proposal data
       final eventRef = FirebaseFirestore.instance.collection('events').doc();
