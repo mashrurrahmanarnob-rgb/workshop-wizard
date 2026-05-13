@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/activity_service.dart';
 
-class SubmitComplaintScreen extends StatefulWidget {
+class SubmitFeedbackScreen extends StatefulWidget {
   final String email;
-  const SubmitComplaintScreen({super.key, required this.email});
+  const SubmitFeedbackScreen({super.key, required this.email});
 
   @override
-  State<SubmitComplaintScreen> createState() => _SubmitComplaintScreenState();
+  State<SubmitFeedbackScreen> createState() => _SubmitFeedbackScreenState();
 }
 
-class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
+class _SubmitFeedbackScreenState extends State<SubmitFeedbackScreen> {
   String? _selectedCategory;
   String _priority = 'Medium';
   final _subjectCtrl = TextEditingController();
@@ -36,7 +36,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseFirestore.instance.collection('complaints').add({
+      await FirebaseFirestore.instance.collection('feedback').add({
         'studentEmail': widget.email,
         'category': _selectedCategory,
         'priority': _priority,
@@ -46,11 +46,11 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      logActivity('Complaint Submitted', 'Subject: ${_subjectCtrl.text}');
+      logActivity('Feedback Submitted', 'Subject: ${_subjectCtrl.text}');
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Complaint submitted successfully'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('Feedback submitted successfully'), backgroundColor: Colors.green),
       );
       
       setState(() {
@@ -73,7 +73,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Submit Complaint', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Submit Feedback', style: TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -100,7 +100,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Your complaint will be reviewed by the committee and president. We aim to respond within 3-5 business days.',
+                      'Your feedback will be reviewed by the committee and president. We aim to respond within 3-5 business days.',
                       style: TextStyle(color: Colors.blue[900], fontSize: 13),
                     ),
                   ),
@@ -112,7 +112,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
             const Text('Category *', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              initialValue: _selectedCategory,
+              value: _selectedCategory,
               hint: const Text('Select a category'),
               items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
@@ -146,7 +146,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _subjectCtrl,
-              decoration: const InputDecoration(hintText: 'Brief summary of your complaint'),
+              decoration: const InputDecoration(hintText: 'Brief summary of your feedback'),
             ),
             const SizedBox(height: 24),
 
@@ -157,7 +157,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
               maxLines: 5,
               maxLength: 500,
               decoration: const InputDecoration(
-                hintText: 'Please provide detailed information about your complaint...',
+                hintText: 'Please provide detailed information about your feedback...',
               ),
             ),
             const SizedBox(height: 32),
@@ -167,7 +167,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _submit,
                 icon: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send),
-                label: const Text('Submit Complaint'),
+                label: const Text('Submit Feedback'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 16),

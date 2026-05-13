@@ -9,8 +9,9 @@ import 'screens/president_home_screen.dart';
 import 'screens/committee_home_screen.dart';
 import 'screens/treasurer_home_screen.dart';
 import 'screens/role_management_screen.dart';
-import 'screens/submit_complaint_screen.dart';
-import 'screens/complaints_list_screen.dart';
+import 'screens/submit_feedback_screen.dart';
+import 'screens/feedback_list_screen.dart';
+import 'screens/president_proposals_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 class _TabConfig {
@@ -69,8 +70,8 @@ class _MainShellState extends State<MainShell> {
           _TabConfig(
             icon: Icons.chat_bubble_outline,
             activeIcon: Icons.chat_bubble,
-            label: 'Complain',
-            screen: SubmitComplaintScreen(email: email),
+            label: 'Feedback',
+            screen: SubmitFeedbackScreen(email: email),
           ),
           profileTab,
         ];
@@ -86,8 +87,8 @@ class _MainShellState extends State<MainShell> {
           _TabConfig(
             icon: Icons.forum_outlined,
             activeIcon: Icons.forum,
-            label: 'Complaints',
-            screen: const ComplaintsListScreen(),
+            label: 'Feedback',
+            screen: const FeedbackListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
@@ -115,8 +116,8 @@ class _MainShellState extends State<MainShell> {
           _TabConfig(
             icon: Icons.forum_outlined,
             activeIcon: Icons.forum,
-            label: 'Complaints',
-            screen: const ComplaintsListScreen(),
+            label: 'Feedback',
+            screen: const FeedbackListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
