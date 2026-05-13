@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:signature/signature.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 import '../services/activity_service.dart';
@@ -682,18 +684,34 @@ class CreateProposalScreen extends StatefulWidget {
 class _CreateProposalScreenState extends State<CreateProposalScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _learningCtrl = TextEditingController();
+  final _audienceCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
   final _budgetCtrl = TextEditingController(text: '0.00');
+  final _durationCtrl = TextEditingController(text: '3');
   final _maxPartCtrl = TextEditingController(text: '50');
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  String? _signatureData; // base64 PNG of committee signature
+  // Signature controller
+  final SignatureController _sigController = SignatureController(
+    penStrokeWidth: 2,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
   bool _saving = false;
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _learningCtrl.dispose();
+    _audienceCtrl.dispose();
     _locationCtrl.dispose();
     _budgetCtrl.dispose();
+    _durationCtrl.dispose();
     _maxPartCtrl.dispose();
+    _sigController.dispose();
     super.dispose();
   }
 
@@ -728,20 +746,42 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
     setState(() => _saving = true);
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
-      final now = Timestamp.now();
+
+      // capture signature PNG if any
+      try {
+        final png = await _sigController.toPngBytes();
+        if (png != null) {
+          _signatureData = base64Encode(png);
+        }
+      } catch (_) {}
+
+      // Build chosen date/time if provided
+      DateTime? chosen;
+      if (_selectedDate != null) {
+        chosen = _selectedDate!;
+        if (_selectedTime != null) {
+          chosen = DateTime(chosen.year, chosen.month, chosen.day, _selectedTime!.hour, _selectedTime!.minute);
+        }
+      }
+      final ts = chosen != null ? Timestamp.fromDate(chosen) : Timestamp.now();
+
       await FirebaseFirestore.instance.collection('proposals').add({
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
+        'learningObjectives': _learningCtrl.text.trim(),
+        'targetAudience': _audienceCtrl.text.trim(),
         'location': _locationCtrl.text.trim(),
         'budget': double.tryParse(_budgetCtrl.text) ?? 0,
+        'durationHours': double.tryParse(_durationCtrl.text) ?? 0,
         'maxParticipants': int.tryParse(_maxPartCtrl.text) ?? 50,
         'status': asDraft ? 'draft' : 'in_review',
         'createdBy': uid,
         'createdAt': FieldValue.serverTimestamp(),
-        // FIX: Only set date when actually submitting, not for drafts
-        'date': asDraft ? null : now,
+        // Only set date when actually submitting
+        'date': asDraft ? null : ts,
+        'committeeSignature': _signatureData ?? '',
       });
-      // FIX: Only log activity for actual submissions, not drafts
+      // Log activity for actual submissions only
       if (!asDraft) {
         await logActivity(
             'New proposal submitted', _titleCtrl.text.trim());
@@ -823,58 +863,165 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
                       _field(_titleCtrl, 'e.g., PCB Soldering Workshop'),
                       const SizedBox(height: 16),
                       _label('Description *'),
-                      _field(
-                          _descCtrl, 'Describe the workshop objectives...',
-                          maxLines: 4),
+                      _field(_descCtrl, 'Brief overview of the workshop...', maxLines: 4),
+                      const SizedBox(height: 16),
+                      _label('Learning Objectives *'),
+                      _field(_learningCtrl, 'What will participants learn from this workshop?', maxLines: 3),
+                      const SizedBox(height: 16),
+                      _label('Target Audience *'),
+                      _field(_audienceCtrl, 'e.g., Engineering students, All years'),
+                      const SizedBox(height: 16),
+
+                      Row(children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Date *'),
+                              GestureDetector(
+                                onTap: () async {
+                                  final d = await showDatePicker(
+                                    context: context,
+                                    initialDate: _selectedDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (d != null) setState(() => _selectedDate = d);
+                                },
+                                child: AbsorbPointer(
+                                  child: TextField(
+                                    controller: TextEditingController(text: _selectedDate == null ? '' : '${_selectedDate!.month}/${_selectedDate!.day}/${_selectedDate!.year}'),
+                                    decoration: const InputDecoration(hintText: 'mm/dd/yyyy', hintStyle: TextStyle(color: AppColors.textLight)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Time *'),
+                              GestureDetector(
+                                onTap: () async {
+                                  final t = await showTimePicker(
+                                    context: context,
+                                    initialTime: _selectedTime ?? TimeOfDay.now(),
+                                  );
+                                  if (t != null) setState(() => _selectedTime = t);
+                                },
+                                child: AbsorbPointer(
+                                  child: TextField(
+                                    controller: TextEditingController(text: _selectedTime == null ? '' : _selectedTime!.format(context)),
+                                    decoration: const InputDecoration(hintText: '--:-- --', hintStyle: TextStyle(color: AppColors.textLight)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
+
                       const SizedBox(height: 16),
                       Row(children: [
                         Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _label('Budget (RM) *'),
-                                  _field(_budgetCtrl, '0.00',
-                                      keyboardType: TextInputType.number)
-                                ])),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Duration (hours) *'),
+                              _field(_durationCtrl, 'e.g., 3', keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _label('Max Participants *'),
-                                  _field(_maxPartCtrl, '50',
-                                      keyboardType: TextInputType.number)
-                                ])),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Expected Participants *'),
+                              _field(_maxPartCtrl, '50', keyboardType: TextInputType.number),
+                            ],
+                          ),
+                        ),
                       ]),
+
                       const SizedBox(height: 16),
                       _label('Location *'),
                       _field(_locationCtrl, 'e.g., Engineering Lab 3'),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed:
-                          _saving ? null : () => _submit(asDraft: false),
-                          child: _saving
-                              ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor:
-                                  AlwaysStoppedAnimation<Color>(
-                                      Colors.white)))
-                              : const Text('Submit Proposal'),
+
+                      _label('Digital Signature *'),
+                      Container(
+                        height: 160,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.textLight.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Signature(
+                                controller: _sigController,
+                                backgroundColor: Colors.white,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _sigController.clear();
+                                          _signatureData = null;
+                                        });
+                                      },
+                                      child: const Text('Clear')),
+                                  TextButton(
+                                      onPressed: () async {
+                                        final png = await _sigController.toPngBytes();
+                                        if (png != null) {
+                                          setState(() {
+                                            _signatureData = base64Encode(png);
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signature captured')));
+                                        }
+                                      },
+                                      child: const Text('Save Signature')),
+                                ],
+                              ),
+                            )
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed:
-                          _saving ? null : () => _submit(asDraft: true),
-                          child: const Text('Save as Draft'),
-                        ),
+
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _saving ? null : () => _submit(asDraft: false),
+                              child: _saving
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+                                  : const Text('Submit Proposal'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1586,47 +1733,73 @@ class _PresidentProposalCard extends StatelessWidget {
     if (confirm != true) return;
 
     try {
-      final batch = FirebaseFirestore.instance.batch();
-      final proposalRef = FirebaseFirestore.instance
-          .collection('proposals')
-          .doc(id);
+      // Fetch latest proposal snapshot to validate state/budget
+      final propSnap = await FirebaseFirestore.instance.collection('proposals').doc(id).get();
+      if (!propSnap.exists) {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proposal not found')));
+        return;
+      }
+      final propData = propSnap.data()!;
+      final currentStatus = propData['status'] as String? ?? 'draft';
 
-      // 1. Update proposal status to approved
+      // Ensure treasurer signed first
+      if (currentStatus != 'treasurer_signed') {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Treasurer must sign before President approval')));
+        return;
+      }
+
+      final budgetNeeded = (propData['budget'] as num?)?.toDouble() ?? 0.0;
+      // Check treasury available funds (document: treasury/funds -> { available: number })
+      final treasuryRef = FirebaseFirestore.instance.collection('treasury').doc('funds');
+      final treasurySnap = await treasuryRef.get();
+      final available = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 0.0;
+      if (budgetNeeded > available) {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient funds. Cannot approve.')));
+        return;
+      }
+
+      final batch = FirebaseFirestore.instance.batch();
+      final proposalRef = FirebaseFirestore.instance.collection('proposals').doc(id);
+
+      // 1. Update proposal status to approved and record president info
       batch.update(proposalRef, {
         'status': 'approved',
         'approvedAt': FieldValue.serverTimestamp(),
+        'presidentApprovedBy': FirebaseAuth.instance.currentUser?.uid,
+        'presidentApprovedAt': FieldValue.serverTimestamp(),
       });
 
-      // 2. Auto-create event from proposal data
-      final eventRef =
-      FirebaseFirestore.instance.collection('events').doc();
+      // 2. Deduct budget from treasury
+      batch.update(treasuryRef, {
+        'available': FieldValue.increment(-budgetNeeded),
+      });
+
+      // 3. Auto-create event from proposal data
+      final eventRef = FirebaseFirestore.instance.collection('events').doc();
       batch.set(eventRef, {
-        'title': data['title'] ?? '',
-        'description': data['description'] ?? '',
-        'location': data['location'] ?? '',
-        'budget': data['budget'] ?? 0,
-        'maxParticipants': data['maxParticipants'] ?? 50,
+        'title': propData['title'] ?? '',
+        'description': propData['description'] ?? '',
+        'location': propData['location'] ?? '',
+        'budget': propData['budget'] ?? 0,
+        'maxParticipants': propData['maxParticipants'] ?? 50,
         'status': 'upcoming',
         'proposalId': id,
-        'createdBy': data['createdBy'],
-        'date': data['date'] ?? FieldValue.serverTimestamp(),
+        'createdBy': propData['createdBy'],
+        'date': propData['date'] ?? FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
         'registrationCount': 0,
       });
 
       await batch.commit();
-      await logActivity('Proposal approved',
-          '${data['title']} — event created automatically');
+
+      await logActivity('Proposal approved', '${propData['title']} — event created automatically');
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content:
-            Text('Proposal approved and event created successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proposal approved and event created successfully')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/proposals_screen.dart';
+import 'screens/treasurer_proposals_screen.dart';
 import 'screens/payments_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/student_home_screen.dart';
@@ -128,6 +129,12 @@ class _MainShellState extends State<MainShell> {
 
       case 'treasurer':
         return [
+          _TabConfig(
+            icon: Icons.description_outlined,
+            activeIcon: Icons.description,
+            label: 'Proposals',
+            screen: TreasurerProposalsScreen(role: role),
+          ),
           _TabConfig(
             icon: Icons.home_outlined,
             activeIcon: Icons.home,
