@@ -43,16 +43,23 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
 
     int workshops = 0;
     try {
-      final snap = await fs.collection('payments')
-          .get();
+      final snap = await fs.collection('payments').get();
       final names = snap.docs
           .map((d) => d['workshopName'] as String? ?? '')
           .toSet();
       workshops = names.length;
     } catch (_) {}
 
+    // Fetch treasury available balance
+    double treasuryAvailable = 0;
+    try {
+      final treasurySnap = await fs.collection('treasury').doc('funds').get();
+      treasuryAvailable = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 10000.0;
+    } catch (_) {}
+
     return {
       'totalCollected': totalCollected,
+      'treasuryAvailable': treasuryAvailable,
       'verified':       verified,
       'pending':        pending,
       'workshops':      workshops,
@@ -151,6 +158,7 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
                   builder: (ctx, snap) {
                     final loading   = snap.connectionState == ConnectionState.waiting;
                     final collected = snap.data?['totalCollected'] ?? 0.0;
+                    final treasuryAvailable = snap.data?['treasuryAvailable'] ?? 0.0;
                     final verified  = snap.data?['verified']       ?? '—';
                     final pending   = snap.data?['pending']        ?? '—';
                     final workshops = snap.data?['workshops']      ?? '—';
@@ -164,14 +172,19 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
                       childAspectRatio: 1.1,
                       children: [
                         StatCard(
+                          label: 'Treasury Balance',
+                          value: loading ? '…' : 'RM ${(treasuryAvailable as double).toStringAsFixed(0)}',
+                          icon: Icons.account_balance_wallet,
+                          color: AppColors.primary,
+                        ),
+                        StatCard(
                           label: 'Total Collected',
                           value: loading ? '…' : 'RM ${(collected as double).toStringAsFixed(0)}',
                           icon: Icons.payments,
-                          color: AppColors.primary,
+                          color: AppColors.student,
                         ),
-                        StatCard(label: 'Verified',   value: loading ? '…' : '$verified',  icon: Icons.verified_user,   color: AppColors.student),
-                        StatCard(label: 'Pending',    value: loading ? '…' : '$pending',   icon: Icons.hourglass_empty, color: AppColors.president),
-                        StatCard(label: 'Workshops',  value: loading ? '…' : '$workshops', icon: Icons.event,           color: AppColors.committee),
+                        StatCard(label: 'Verified',   value: loading ? '…' : '$verified',  icon: Icons.verified_user,   color: AppColors.president),
+                        StatCard(label: 'Pending',    value: loading ? '…' : '$pending',   icon: Icons.hourglass_empty, color: AppColors.committee),
                       ],
                     );
                   },

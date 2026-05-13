@@ -2,14 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-class ComplaintsListScreen extends StatefulWidget {
-  const ComplaintsListScreen({super.key});
+class FeedbackListScreen extends StatefulWidget {
+  const FeedbackListScreen({super.key});
 
   @override
-  State<ComplaintsListScreen> createState() => _ComplaintsListScreenState();
+  State<FeedbackListScreen> createState() => _FeedbackListScreenState();
 }
 
-class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
+class _FeedbackListScreenState extends State<FeedbackListScreen> {
   String _filter = 'All';
 
   @override
@@ -17,7 +17,7 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Student Complaints', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Student Feedback', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
       ),
       body: Column(
@@ -58,7 +58,7 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
                   itemCount: docs.length,
                   itemBuilder: (ctx, i) {
                     final data = docs[i].data() as Map<String, dynamic>;
-                    return _ComplaintCard(id: docs[i].id, data: data);
+                    return _FeedbackCard(id: docs[i].id, data: data);
                   },
                 );
               },
@@ -70,7 +70,7 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
   }
 
   Stream<QuerySnapshot> _getStream() {
-    Query query = FirebaseFirestore.instance.collection('complaints').orderBy('createdAt', descending: true);
+    Query query = FirebaseFirestore.instance.collection('feedback').orderBy('createdAt', descending: true);
     if (_filter != 'All') {
       query = query.where('status', isEqualTo: _filter);
     }
@@ -78,10 +78,10 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
   }
 }
 
-class _ComplaintCard extends StatelessWidget {
+class _FeedbackCard extends StatelessWidget {
   final String id;
   final Map<String, dynamic> data;
-  const _ComplaintCard({required this.id, required this.data});
+  const _FeedbackCard({required this.id, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +126,7 @@ class _ComplaintCard extends StatelessWidget {
               if (status == 'Pending')
                 TextButton(
                   onPressed: () {
-                    FirebaseFirestore.instance.collection('complaints').doc(id).update({'status': 'Resolved'});
+                    FirebaseFirestore.instance.collection('feedback').doc(id).update({'status': 'Resolved'});
                   },
                   child: const Text('Resolve'),
                 ),
@@ -152,10 +152,10 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.description_outlined, size: 80, color: Colors.grey.shade300),
+          Icon(Icons.forum_outlined, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text('No complaints found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Text('No complaints have been submitted yet', style: TextStyle(color: Colors.grey)),
+          const Text('No feedback found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('No feedback has been submitted yet', style: TextStyle(color: Colors.grey)),
         ],
       ),
     );
