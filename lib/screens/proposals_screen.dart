@@ -151,7 +151,7 @@ class ProposalsScreen extends StatelessWidget {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: docs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final d      = docs[i].data() as Map<String, dynamic>;
                       final id     = docs[i].id;
@@ -325,8 +325,11 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
       );
       await Printing.layoutPdf(onLayout: (_) async => pdf.save(), name: '$title.pdf');
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error generating PDF: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating PDF: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _generatingPdf = false);
     }
@@ -352,10 +355,15 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
     setState(() => _deleting = true);
     try {
       await FirebaseFirestore.instance.collection('proposals').doc(widget.id).delete();
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error deleting: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _deleting = false);
     }
@@ -906,14 +914,14 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
       if (!_validateForSubmit()) return;
     }
 
+    final timeStr = _eventTime?.format(context);
     setState(() => _saving = true);
     try {
       String? sigBase64;
-      if (!asDraft && !_sigCtrl.isEmpty) {
+      if (!asDraft && _sigCtrl.isNotEmpty) {
         final sigBytes = await _sigCtrl.toPngBytes();
         if (sigBytes != null) sigBase64 = base64Encode(sigBytes);
       }
-
       final uid   = FirebaseAuth.instance.currentUser!.uid;
       final email = FirebaseAuth.instance.currentUser!.email ?? '';
       final combinedDate = _eventDate != null && _eventTime != null
@@ -928,7 +936,7 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
         'objectives':      _objectivesCtrl.text.trim(),
         'targetAudience':  _audienceCtrl.text.trim(),
         'date':            combinedDate,
-        'time':            _eventTime?.format(context),
+        'time':            timeStr,
         'duration':        _durationCtrl.text.trim(),
         'location':        _locationCtrl.text.trim(),
         'maxParticipants': int.tryParse(_participantsCtrl.text) ?? 0,
@@ -1206,8 +1214,11 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error loading: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1220,6 +1231,7 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
     if (_titleCtrl.text.trim().isEmpty) {
       _snack('Please enter at least a title'); return;
     }
+    final timeStr = _eventTime?.format(context);
     setState(() => _saving = true);
     try {
       await FirebaseFirestore.instance
@@ -1235,7 +1247,7 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
         'isFree':          _isFree,
         'fee':             _isFree ? 0.0 : (double.tryParse(_feeCtrl.text) ?? 0.0),
         'date':            _eventDate != null ? Timestamp.fromDate(_eventDate!) : null,
-        'time':            _eventTime?.format(context),
+        'time':            timeStr,
         'status':          'draft',
       });
       if (mounted) { _snack('Draft saved'); Navigator.pop(context); }
@@ -1255,6 +1267,7 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
       _snack('Signature is required to submit'); return;
     }
 
+    final timeStr = _eventTime?.format(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1267,7 +1280,6 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
       ),
     );
     if (confirm != true) return;
-
     setState(() => _saving = true);
     try {
       final sigBytes  = await _sigCtrl.toPngBytes();
@@ -1290,7 +1302,7 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
             _eventDate!.year, _eventDate!.month, _eventDate!.day,
             _eventTime!.hour, _eventTime!.minute))
             : null,
-        'time':            _eventTime?.format(context),
+        'time':            timeStr,
         'signature':       sigBase64,
         'status':          'in_review',
         'submittedAt':     FieldValue.serverTimestamp(),
@@ -1608,7 +1620,7 @@ class _PresidentProposalsScreenState extends State<PresidentProposalsScreen> {
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: docs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (c, i) {
                       final d = docs[i].data() as Map<String, dynamic>;
                       return _PresidentProposalCard(id: docs[i].id, data: d);
@@ -1759,11 +1771,17 @@ class _PresidentProposalCard extends StatelessWidget {
       });
       await batch.commit();
       await logActivity('Proposal Approved', '${data['title']} — event created');
-      if (context.mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Proposal approved and event created')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proposal approved and event created')),
+        );
+      }
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -1801,11 +1819,17 @@ class _PresidentProposalCard extends StatelessWidget {
         'rejectedAt': FieldValue.serverTimestamp(),
       });
       await logActivity('Proposal Rejected', data['title'] ?? '');
-      if (context.mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Proposal rejected')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proposal rejected')),
+        );
+      }
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 }
