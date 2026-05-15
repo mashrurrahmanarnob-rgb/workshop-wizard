@@ -1742,12 +1742,44 @@ class _PresidentProposalCard extends StatelessWidget {
     );
     if (confirm != true) return;
     try {
+      final budgetNeeded = (data['budget'] as num?)?.toDouble() ?? 0.0;
+
+      // Fetch treasury balance
+      double treasuryAvailable = 0;
+      try {
+        final treasurySnap = await FirebaseFirestore.instance
+            .collection('treasury').doc('funds').get();
+        treasuryAvailable = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 10000.0;
+      } catch (_) {}
+
+      if (budgetNeeded > treasuryAvailable) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Not Enough Budget'),
+              content: Text('Proposal requires RM ${budgetNeeded.toStringAsFixed(2)} but treasury only has RM ${treasuryAvailable.toStringAsFixed(2)}.'),
+              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+            ),
+          );
+        }
+        return;
+      }
 
       final batch = FirebaseFirestore.instance.batch();
-      batch.update(FirebaseFirestore.instance.collection('proposals').doc(id), {
+      final proposalRef = FirebaseFirestore.instance.collection('proposals').doc(id);
+      final treasuryRef = FirebaseFirestore.instance.collection('treasury').doc('funds');
+
+      batch.update(proposalRef, {
         'status': 'approved',
         'approvedAt': FieldValue.serverTimestamp(),
       });
+
+      // Deduct budget from treasury (auto-creates doc if missing)
+      batch.set(treasuryRef, {
+        'available': FieldValue.increment(-budgetNeeded),
+      }, SetOptions(merge: true));
+
       final eventRef = FirebaseFirestore.instance.collection('events').doc();
       batch.set(eventRef, {
         'title':           data['title']           ?? '',
