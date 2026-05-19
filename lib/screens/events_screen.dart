@@ -48,7 +48,7 @@ class EventsScreen extends StatelessWidget {
                 stream: FirebaseFirestore.instance
                     .collection('event_registrations')
                     .where('userId', isEqualTo: uid)
-                    .orderBy('registeredAt', descending: true)
+                    .orderBy('createdAt', descending: true)
                     .snapshots(),
                 builder: (ctx, regSnap) {
                   if (regSnap.connectionState == ConnectionState.waiting) {

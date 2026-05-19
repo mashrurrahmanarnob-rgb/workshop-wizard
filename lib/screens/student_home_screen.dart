@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'available_events_screen.dart';
+import 'event_detail_screen.dart';
 
 class StudentHomeScreen extends StatelessWidget {
   final String email;
@@ -91,19 +93,35 @@ class StudentHomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
 
-              // Available events
-              const Text('Available Events',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-              const SizedBox(height: 4),
-              const Text('Upcoming workshops open for registration',
-                  style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
+              // Available events header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Available Events',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textDark)),
+                      SizedBox(height: 2),
+                      Text('Upcoming workshops open for registration',
+                          style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AvailableEventsScreen())),
+                    child: const Text('View All', style: TextStyle(color: AppColors.student, fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
 
+              // Events list (first 3)
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('events')
                     .where('status', isEqualTo: 'upcoming')
                     .orderBy('date')
+                    .limit(3)
                     .snapshots(),
                 builder: (ctx, snap) {
                   if (snap.connectionState == ConnectionState.waiting) {
@@ -154,70 +172,94 @@ class _AvailableEventCard extends StatelessWidget {
     final location    = data['location']        as String? ?? '';
     final description = data['description']     as String? ?? '';
     final fee         = (data['fee'] as num?)?.toDouble() ?? 0;
+    final isFree      = data['isFree'] as bool? ?? (fee == 0);
     final maxPart     = data['maxParticipants'] as int?    ?? 0;
+    final regCount    = data['registrationCount'] as int?  ?? 0;
     final dateStr     = _formatDate(data['date'] as Timestamp?);
-    final feeLabel    = fee == 0 ? 'Free' : 'RM ${fee.toStringAsFixed(2)}';
+    final feeLabel    = isFree || fee == 0 ? 'Free' : 'RM ${fee.toStringAsFixed(2)}';
+    final isSoldOut   = maxPart > 0 && regCount >= maxPart;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.cardWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(title,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: fee == 0
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.student.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+        builder: (_) => EventDetailScreen(eventId: id, data: data),
+      )),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.student, Color(0xFF42A5F5)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: AppColors.student.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                 ),
-                child: Text(feeLabel,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(feeLabel,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+              ],
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85), height: 1.4)),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.calendar_today_outlined, size: 13, color: Colors.white.withValues(alpha: 0.7)),
+                const SizedBox(width: 5),
+                Text(dateStr, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                const SizedBox(width: 16),
+                Icon(Icons.location_on_outlined, size: 13, color: Colors.white.withValues(alpha: 0.7)),
+                const SizedBox(width: 5),
+                Expanded(child: Text(location, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.people_outline, size: 13, color: Colors.white.withValues(alpha: 0.7)),
+                const SizedBox(width: 5),
+                Text('$regCount / $maxPart registered', style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSoldOut ? Colors.white.withValues(alpha: 0.15) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isSoldOut ? 'Sold Out' : 'Register',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: fee == 0 ? AppColors.primary : AppColors.student,
-                    )),
-              ),
-            ],
-          ),
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, color: AppColors.textMedium, height: 1.4)),
+                      color: isSoldOut ? Colors.white.withValues(alpha: 0.7) : AppColors.student,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMedium),
-              const SizedBox(width: 5),
-              Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
-              const SizedBox(width: 16),
-              const Icon(Icons.location_on_outlined, size: 13, color: AppColors.textMedium),
-              const SizedBox(width: 5),
-              Expanded(child: Text(location, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textMedium))),
-              const SizedBox(width: 8),
-              const Icon(Icons.people_outline, size: 13, color: AppColors.textMedium),
-              const SizedBox(width: 5),
-              Text('$maxPart slots', style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

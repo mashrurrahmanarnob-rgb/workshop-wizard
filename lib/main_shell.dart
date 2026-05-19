@@ -4,6 +4,7 @@ import 'screens/proposals_screen.dart';
 import 'screens/payments_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/student_home_screen.dart';
+import 'screens/events_screen.dart';
 import 'screens/president_home_screen.dart';
 import 'screens/committee_home_screen.dart';
 import 'screens/treasurer_home_screen.dart';
@@ -64,6 +65,12 @@ class _MainShellState extends State<MainShell> {
             activeIcon: Icons.home,
             label: 'Home',
             screen: StudentHomeScreen(email: email),
+          ),
+          _TabConfig(
+            icon: Icons.event_outlined,
+            activeIcon: Icons.event,
+            label: 'My Events',
+            screen: EventsScreen(email: email),
           ),
           _TabConfig(
             icon: Icons.chat_bubble_outline,
