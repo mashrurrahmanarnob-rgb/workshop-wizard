@@ -8,6 +8,13 @@ class StudentHomeScreen extends StatelessWidget {
   final String email;
   const StudentHomeScreen({super.key, required this.email});
 
+  String _formatDate(Timestamp? ts) {
+    if (ts == null) return 'Date TBC';
+    final d = ts.toDate();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,21 +114,17 @@ class StudentHomeScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
                     ],
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AvailableEventsScreen())),
-                    child: const Text('View All', style: TextStyle(color: AppColors.student, fontWeight: FontWeight.w700)),
-                  ),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Events list (first 3)
+              // Single trending event preview
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('events')
                     .where('status', isEqualTo: 'upcoming')
                     .orderBy('date')
-                    .limit(3)
+                    .limit(1)
                     .snapshots(),
                 builder: (ctx, snap) {
                   if (snap.connectionState == ConnectionState.waiting) {
@@ -134,16 +137,27 @@ class StudentHomeScreen extends StatelessWidget {
                   if (docs.isEmpty) {
                     return _EmptyAvailableEvents();
                   }
-                  return Column(
-                    children: docs.map((doc) {
-                      final d = doc.data() as Map<String, dynamic>;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _AvailableEventCard(id: doc.id, data: d),
-                      );
-                    }).toList(),
-                  );
+                  final doc = docs.first;
+                  final d = doc.data() as Map<String, dynamic>;
+                  return _TrendingEventCard(id: doc.id, data: d, formatDate: _formatDate);
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // View All Events button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AvailableEventsScreen())),
+                  icon: const Icon(Icons.event_note, size: 18),
+                  label: const Text('View All Events', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.student,
+                    side: const BorderSide(color: AppColors.student),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -154,17 +168,11 @@ class StudentHomeScreen extends StatelessWidget {
   }
 }
 
-class _AvailableEventCard extends StatelessWidget {
+class _TrendingEventCard extends StatelessWidget {
   final String id;
   final Map<String, dynamic> data;
-  const _AvailableEventCard({required this.id, required this.data});
-
-  String _formatDate(Timestamp? ts) {
-    if (ts == null) return 'Date TBC';
-    final d = ts.toDate();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
-  }
+  final String Function(Timestamp?) formatDate;
+  const _TrendingEventCard({required this.id, required this.data, required this.formatDate});
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +183,7 @@ class _AvailableEventCard extends StatelessWidget {
     final isFree      = data['isFree'] as bool? ?? (fee == 0);
     final maxPart     = data['maxParticipants'] as int?    ?? 0;
     final regCount    = data['registrationCount'] as int?  ?? 0;
-    final dateStr     = _formatDate(data['date'] as Timestamp?);
+    final dateStr     = formatDate(data['date'] as Timestamp?);
     final feeLabel    = isFree || fee == 0 ? 'Free' : 'RM ${fee.toStringAsFixed(2)}';
     final isSoldOut   = maxPart > 0 && regCount >= maxPart;
 
@@ -227,7 +235,11 @@ class _AvailableEventCard extends StatelessWidget {
                 Icon(Icons.calendar_today_outlined, size: 13, color: Colors.white.withValues(alpha: 0.7)),
                 const SizedBox(width: 5),
                 Text(dateStr, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
-                const SizedBox(width: 16),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
                 Icon(Icons.location_on_outlined, size: 13, color: Colors.white.withValues(alpha: 0.7)),
                 const SizedBox(width: 5),
                 Expanded(child: Text(location, overflow: TextOverflow.ellipsis,

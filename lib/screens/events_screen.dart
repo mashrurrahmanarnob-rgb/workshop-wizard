@@ -24,18 +24,27 @@ class EventsScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('IEEE PES UTM',
-                          style: TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w500)),
-                      Text('My Events',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textDark)),
-                      Text('Events you have registered for',
-                          style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
-                    ],
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('IEEE PES UTM',
+                            style: TextStyle(fontSize: 12, color: AppColors.textLight, fontWeight: FontWeight.w500)),
+                        Text('My Events',
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                        Text('Events you have registered for',
+                            style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                      ],
+                    ),
                   ),
-                  const Icon(Icons.event, color: AppColors.student, size: 26),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.student.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.event, color: AppColors.student, size: 24),
+                  ),
                 ],
               ),
             ),
@@ -48,30 +57,59 @@ class EventsScreen extends StatelessWidget {
                 stream: FirebaseFirestore.instance
                     .collection('event_registrations')
                     .where('userId', isEqualTo: uid)
-                    .orderBy('createdAt', descending: true)
                     .snapshots(),
                 builder: (ctx, regSnap) {
                   if (regSnap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: AppColors.student));
                   }
                   if (regSnap.hasError) {
-                    return Center(child: Text('Error: ${regSnap.error}'));
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline, color: AppColors.admin, size: 48),
+                            const SizedBox(height: 12),
+                            Text('Error: ${regSnap.error}', textAlign: TextAlign.center,
+                                style: const TextStyle(color: AppColors.textMedium)),
+                            const SizedBox(height: 8),
+                            const Text('If this is an index error, create the index in Firebase Console.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.textLight, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    );
                   }
                   final regs = regSnap.data?.docs ?? [];
                   if (regs.isEmpty) {
                     return _EmptyEvents();
                   }
+                  // Sort client-side since composite index may not exist
+                  final sorted = List<QueryDocumentSnapshot>.from(regs)
+                    ..sort((a, b) {
+                      final aTs = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+                      final bTs = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+                      if (aTs == null || bTs == null) return 0;
+                      return bTs.compareTo(aTs);
+                    });
+
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: regs.length,
+                    itemCount: sorted.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (c, i) {
-                      final reg = regs[i].data() as Map<String, dynamic>;
+                      final reg = sorted[i].data() as Map<String, dynamic>;
                       final eventId = reg['eventId'] as String? ?? '';
                       final paymentStatus = reg['paymentStatus'] as String? ?? 'pending';
+                      final eventName = reg['eventName'] as String? ?? '';
+                      final status = reg['status'] as String? ?? 'pending';
                       return _RegisteredEventCard(
                         eventId: eventId,
+                        eventName: eventName,
                         paymentStatus: paymentStatus,
+                        registrationStatus: status,
                       );
                     },
                   );
@@ -85,11 +123,17 @@ class EventsScreen extends StatelessWidget {
   }
 }
 
-// Fetches and displays a single registered event by eventId
 class _RegisteredEventCard extends StatelessWidget {
   final String eventId;
+  final String eventName;
   final String paymentStatus;
-  const _RegisteredEventCard({required this.eventId, required this.paymentStatus});
+  final String registrationStatus;
+  const _RegisteredEventCard({
+    required this.eventId,
+    required this.eventName,
+    required this.paymentStatus,
+    required this.registrationStatus,
+  });
 
   Color get _paymentColor {
     switch (paymentStatus) {
@@ -104,6 +148,22 @@ class _RegisteredEventCard extends StatelessWidget {
       case 'paid':    return 'Paid';
       case 'free':    return 'Free';
       default:        return 'Payment Pending';
+    }
+  }
+
+  Color get _regColor {
+    switch (registrationStatus.toLowerCase()) {
+      case 'verified': return AppColors.primary;
+      case 'rejected': return AppColors.admin;
+      default:         return AppColors.president;
+    }
+  }
+
+  String get _regLabel {
+    switch (registrationStatus.toLowerCase()) {
+      case 'verified': return 'Verified';
+      case 'rejected': return 'Rejected';
+      default:         return 'Pending';
     }
   }
 
@@ -123,7 +183,13 @@ class _RegisteredEventCard extends StatelessWidget {
           );
         }
         if (!snap.hasData || !snap.data!.exists) {
-          return const SizedBox.shrink();
+          // Event doc missing — show from registration data
+          return _buildCard(
+            title: eventName.isNotEmpty ? eventName : '(Event removed)',
+            location: '',
+            dateStr: 'Date TBC',
+            status: 'unknown',
+          );
         }
         final d = snap.data!.data() as Map<String, dynamic>;
         final title    = d['title']    as String? ?? '(Untitled)';
@@ -132,78 +198,79 @@ class _RegisteredEventCard extends StatelessWidget {
         final ts       = d['date']     as Timestamp?;
         final dateStr  = ts != null ? _formatDate(ts) : 'Date TBC';
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.cardWhite,
-            borderRadius: BorderRadius.circular(16),
-            border: const Border(left: BorderSide(color: AppColors.student, width: 4)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Row(
+        return _buildCard(title: title, location: location, dateStr: dateStr, status: status);
+      },
+    );
+  }
+
+  Widget _buildCard({required String title, required String location, required String dateStr, required String status}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(left: BorderSide(color: AppColors.student, width: 4)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Date badge
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.student.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.event, color: AppColors.student, size: 22),
-              ),
-              const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 12, color: AppColors.textMedium),
-                        const SizedBox(width: 3),
-                        Expanded(child: Text(location,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMedium))),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Event status
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(status[0].toUpperCase() + status.substring(1),
-                        style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 6),
-                  // Payment status
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _paymentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(_paymentLabel,
-                        style: TextStyle(fontSize: 11, color: _paymentColor, fontWeight: FontWeight.w600)),
-                  ),
-                ],
+                child: Text(title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined, size: 13, color: AppColors.textMedium),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(location.isNotEmpty ? location : 'Location TBC',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMedium),
+              const SizedBox(width: 4),
+              Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _paymentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(_paymentLabel,
+                    style: TextStyle(fontSize: 11, color: _paymentColor, fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _regColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(_regLabel,
+                    style: TextStyle(fontSize: 11, color: _regColor, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

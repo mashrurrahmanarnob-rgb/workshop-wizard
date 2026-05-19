@@ -69,7 +69,7 @@ class _MainShellState extends State<MainShell> {
           _TabConfig(
             icon: Icons.event_outlined,
             activeIcon: Icons.event,
-            label: 'My Events',
+            label: 'Events',
             screen: EventsScreen(email: email),
           ),
           _TabConfig(
