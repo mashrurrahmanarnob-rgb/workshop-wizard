@@ -123,7 +123,6 @@ class StudentHomeScreen extends StatelessWidget {
                 stream: FirebaseFirestore.instance
                     .collection('events')
                     .where('status', isEqualTo: 'upcoming')
-                    .orderBy('date')
                     .limit(1)
                     .snapshots(),
                 builder: (ctx, snap) {

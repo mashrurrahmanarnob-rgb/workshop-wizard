@@ -1743,27 +1743,42 @@ class _PresidentProposalCard extends StatelessWidget {
     if (confirm != true) return;
     try {
       final budgetNeeded = (data['budget'] as num?)?.toDouble() ?? 0.0;
+      final maxParticipants = (data['maxParticipants'] as num?)?.toInt() ?? 0;
+      final fee = (data['fee'] as num?)?.toDouble() ?? 0.0;
+      final isFree = data['isFree'] as bool? ?? true;
 
-      // Fetch treasury balance
-      double treasuryAvailable = 0;
-      try {
-        final treasurySnap = await FirebaseFirestore.instance
-            .collection('treasury').doc('funds').get();
-        treasuryAvailable = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 10000.0;
-      } catch (_) {}
+      // Calculate expected revenue from student fees
+      final expectedRevenue = isFree ? 0.0 : maxParticipants * fee;
+      // Net cost = what treasury actually needs to cover
+      final netCost = budgetNeeded > expectedRevenue ? budgetNeeded - expectedRevenue : 0.0;
 
-      if (budgetNeeded > treasuryAvailable) {
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Not Enough Budget'),
-              content: Text('Proposal requires RM ${budgetNeeded.toStringAsFixed(2)} but treasury only has RM ${treasuryAvailable.toStringAsFixed(2)}.'),
-              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-            ),
-          );
+      // Only check treasury if there's a net cost to cover
+      if (netCost > 0) {
+        double treasuryAvailable = 0;
+        try {
+          final treasurySnap = await FirebaseFirestore.instance
+              .collection('treasury').doc('funds').get();
+          treasuryAvailable = (treasurySnap.data()?['available'] as num?)?.toDouble() ?? 10000.0;
+        } catch (_) {}
+
+        if (netCost > treasuryAvailable) {
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Not Enough Budget'),
+                content: Text(
+                  'Proposal requires RM ${budgetNeeded.toStringAsFixed(2)}\n'
+                  'Expected revenue from fees: RM ${expectedRevenue.toStringAsFixed(2)}\n'
+                  'Net cost to treasury: RM ${netCost.toStringAsFixed(2)}\n'
+                  'But treasury only has RM ${treasuryAvailable.toStringAsFixed(2)}.',
+                ),
+                actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+              ),
+            );
+          }
+          return;
         }
-        return;
       }
 
       final batch = FirebaseFirestore.instance.batch();
@@ -1775,10 +1790,12 @@ class _PresidentProposalCard extends StatelessWidget {
         'approvedAt': FieldValue.serverTimestamp(),
       });
 
-      // Deduct budget from treasury (auto-creates doc if missing)
-      batch.set(treasuryRef, {
-        'available': FieldValue.increment(-budgetNeeded),
-      }, SetOptions(merge: true));
+      // Only deduct net cost from treasury (0 if self-funded)
+      if (netCost > 0) {
+        batch.set(treasuryRef, {
+          'available': FieldValue.increment(-netCost),
+        }, SetOptions(merge: true));
+      }
 
       final eventRef = FirebaseFirestore.instance.collection('events').doc();
       batch.set(eventRef, {

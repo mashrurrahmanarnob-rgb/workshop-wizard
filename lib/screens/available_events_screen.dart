@@ -85,7 +85,6 @@ class _AvailableEventsScreenState extends State<AvailableEventsScreen> {
                 stream: FirebaseFirestore.instance
                     .collection('events')
                     .where('status', isEqualTo: 'upcoming')
-                    .orderBy('date')
                     .snapshots(),
                 builder: (ctx, snap) {
                   if (snap.connectionState == ConnectionState.waiting) {
