@@ -57,10 +57,10 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
 
   bool get _step1Valid =>
       _nameCtrl.text.trim().isNotEmpty &&
-      _studentIdCtrl.text.trim().isNotEmpty &&
-      _emailCtrl.text.trim().isNotEmpty &&
-      _phoneCtrl.text.trim().isNotEmpty &&
-      _department != null;
+          _studentIdCtrl.text.trim().isNotEmpty &&
+          _emailCtrl.text.trim().isNotEmpty &&
+          _phoneCtrl.text.trim().isNotEmpty &&
+          _department != null;
 
   bool get _step2Valid => _receiptBase64 != null || _isFreeEvent;
 
@@ -166,7 +166,11 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
                 Text('Registration Submitted'),
               ],
             ),
-            content: const Text('Your registration has been submitted successfully. You will receive a confirmation once your payment is verified.'),
+            // ── FIXED: different message for free vs paid events ──
+            content: Text(_isFreeEvent
+                ? 'You\'re registered! See you at the event.'
+                : 'Your registration has been submitted successfully. You will receive a confirmation once your payment is verified.',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
@@ -244,50 +248,50 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: _step == 1
                   ? SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _step1Valid ? () => setState(() => _step = 2) : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text('Continue to Payment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      ),
-                    )
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _step1Valid ? () => setState(() => _step = 2) : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Continue to Payment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+              )
                   : Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => setState(() => _step = 1),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textMedium,
-                              side: const BorderSide(color: AppColors.divider),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: const Text('Back'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: _submitting || !_step2Valid ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: _submitting
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text('Submit Registration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ],
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _step = 1),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textMedium,
+                        side: const BorderSide(color: AppColors.divider),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Back'),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _submitting || !_step2Valid ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: _submitting
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Submit Registration', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -183,27 +183,35 @@ class _RegisteredEventCard extends StatelessWidget {
           );
         }
         if (!snap.hasData || !snap.data!.exists) {
-          // Event doc missing — show from registration data
           return _buildCard(
             title: eventName.isNotEmpty ? eventName : '(Event removed)',
             location: '',
             dateStr: 'Date TBC',
-            status: 'unknown',
+            timeStr: null,
           );
         }
         final d = snap.data!.data() as Map<String, dynamic>;
         final title    = d['title']    as String? ?? '(Untitled)';
         final location = d['location'] as String? ?? '';
-        final status   = d['status']   as String? ?? 'upcoming';
         final ts       = d['date']     as Timestamp?;
         final dateStr  = ts != null ? _formatDate(ts) : 'Date TBC';
+        // Support both a separate 'time' string field and extracting time from the
+        // same Timestamp used for the date (whichever your Firestore doc uses).
+        final timeStr  = (d['time'] as String?)?.isNotEmpty == true
+            ? d['time'] as String
+            : (ts != null ? _formatTime(ts) : null);
 
-        return _buildCard(title: title, location: location, dateStr: dateStr, status: status);
+        return _buildCard(title: title, location: location, dateStr: dateStr, timeStr: timeStr);
       },
     );
   }
 
-  Widget _buildCard({required String title, required String location, required String dateStr, required String status}) {
+  Widget _buildCard({
+    required String title,
+    required String location,
+    required String dateStr,
+    required String? timeStr,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -215,14 +223,8 @@ class _RegisteredEventCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
-              ),
-            ],
-          ),
+          Text(title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textDark)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -236,11 +238,18 @@ class _RegisteredEventCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          // Date and time on the same row
           Row(
             children: [
               const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMedium),
               const SizedBox(width: 4),
               Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+              if (timeStr != null) ...[
+                const SizedBox(width: 12),
+                const Icon(Icons.access_time_outlined, size: 13, color: AppColors.textMedium),
+                const SizedBox(width: 4),
+                Text(timeStr, style: const TextStyle(fontSize: 12, color: AppColors.textMedium)),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -278,6 +287,16 @@ class _RegisteredEventCard extends StatelessWidget {
     final d = ts.toDate();
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
+  // Extracts time from the Timestamp (e.g. "9:00 AM")
+  String _formatTime(Timestamp ts) {
+    final d = ts.toDate();
+    final hour   = d.hour;
+    final minute = d.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+    return '$hour12:$minute $period';
   }
 }
 
