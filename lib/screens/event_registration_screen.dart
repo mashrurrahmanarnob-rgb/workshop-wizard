@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,6 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
   String? _department;
 
   // Step 2
-  File? _receiptImage;
   String? _receiptBase64;
   final _picker = ImagePicker();
 
@@ -75,20 +73,35 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
   double get _eventFee => (widget.eventData['fee'] as num?)?.toDouble() ?? 0;
 
   Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-      maxWidth: 1024,
-    );
-    if (picked == null) return;
-    final bytes = await picked.readAsBytes();
-    setState(() {
-      _receiptImage = File(picked.path);
-      _receiptBase64 = base64Encode(bytes);
-    });
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1024,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (bytes.length > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Selected image is too large. Please choose a file under 5MB.')),
+          );
+        }
+        return;
+      }
+      setState(() {
+        _receiptBase64 = base64Encode(bytes);
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload payment image: $error')),
+        );
+      }
+    }
   }
 
-  void _removeImage() => setState(() { _receiptImage = null; _receiptBase64 = null; });
+  void _removeImage() => setState(() { _receiptBase64 = null; });
 
   Future<void> _submit() async {
     if (!_step2Valid) return;
@@ -417,7 +430,7 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
         // Upload area
         _label('Upload Payment Proof *'),
         const SizedBox(height: 8),
-        if (_receiptImage != null) ...[
+        if (_receiptBase64 != null) ...[
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -426,7 +439,7 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
             clipBehavior: Clip.hardEdge,
             child: Column(
               children: [
-                Image.file(_receiptImage!, fit: BoxFit.cover),
+                Image.memory(base64Decode(_receiptBase64!), fit: BoxFit.cover, width: double.infinity),
                 const Divider(height: 1),
                 TextButton.icon(
                   onPressed: _removeImage,
@@ -453,7 +466,7 @@ class _EventRegistrationScreenState extends State<EventRegistrationScreen> {
                   const SizedBox(height: 10),
                   const Text('Click to upload payment receipt', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  const Text('PNG, JPG or PDF (Max 5MB)', style: TextStyle(color: AppColors.textLight, fontSize: 12)),
+                  const Text('PNG or JPG only (Max 5MB)', style: TextStyle(color: AppColors.textLight, fontSize: 12)),
                 ],
               ),
             ),
