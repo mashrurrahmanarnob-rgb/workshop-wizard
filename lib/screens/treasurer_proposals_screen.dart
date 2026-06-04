@@ -56,7 +56,7 @@ class _TreasurerProposalsScreenState extends State<TreasurerProposalsScreen> {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                   }
-                  if (snap.hasError) return Center(child: Text('Error: \\${snap.error}'));
+                  if (snap.hasError) return Center(child: Text('Error: ${snap.error}'));
                   final docs = snap.data?.docs ?? [];
                   if (docs.isEmpty) return const Center(child: Text('No proposals to sign'));
                   return ListView.separated(

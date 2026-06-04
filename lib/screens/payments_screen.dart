@@ -220,7 +220,7 @@ class _PaymentCard extends StatelessWidget {
       if (regSnap.docs.isNotEmpty) {
         await regSnap.docs.first.reference.update({
           'status': newStatus,
-          'paymentStatus': newStatus == 'verified' ? 'paid' : 'pending',
+          'paymentStatus': newStatus == 'verified' ? 'paid' : newStatus == 'rejected' ? 'rejected' : 'pending',
           if (newStatus == 'verified') 'verifiedAt': FieldValue.serverTimestamp(),
         });
       }

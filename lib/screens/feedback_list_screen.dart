@@ -125,8 +125,16 @@ class _FeedbackCard extends StatelessWidget {
             children: [
               if (status == 'Pending')
                 TextButton(
-                  onPressed: () {
-                    FirebaseFirestore.instance.collection('feedback').doc(id).update({'status': 'Resolved'});
+                  onPressed: () async {
+                    try {
+                      await FirebaseFirestore.instance.collection('feedback').doc(id).update({'status': 'Resolved'});
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.admin),
+                        );
+                      }
+                    }
                   },
                   child: const Text('Resolve'),
                 ),

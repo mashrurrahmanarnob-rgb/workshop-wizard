@@ -157,8 +157,8 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
                   future: _future,
                   builder: (ctx, snap) {
                     final loading   = snap.connectionState == ConnectionState.waiting;
-                    final collected = snap.data?['totalCollected'] ?? 0.0;
-                    final treasuryAvailable = snap.data?['treasuryAvailable'] ?? 0.0;
+                    final collected = ((snap.data?['totalCollected'] ?? 0.0) as num).toDouble();
+                    final treasuryAvailable = ((snap.data?['treasuryAvailable'] ?? 0.0) as num).toDouble();
                     final verified  = snap.data?['verified']       ?? '—';
                     final pending   = snap.data?['pending']        ?? '—';
                     return GridView.count(
@@ -171,13 +171,13 @@ class _TreasurerHomeScreenState extends State<TreasurerHomeScreen> {
                       children: [
                         StatCard(
                           label: 'Treasury Balance',
-                          value: loading ? '…' : 'RM ${(treasuryAvailable as double).toStringAsFixed(0)}',
+                          value: loading ? '…' : 'RM ${treasuryAvailable.toStringAsFixed(0)}',
                           icon: Icons.account_balance_wallet,
                           color: AppColors.primary,
                         ),
                         StatCard(
                           label: 'Total Collected',
-                          value: loading ? '…' : 'RM ${(collected as double).toStringAsFixed(0)}',
+                          value: loading ? '…' : 'RM ${collected.toStringAsFixed(0)}',
                           icon: Icons.payments,
                           color: AppColors.student,
                         ),

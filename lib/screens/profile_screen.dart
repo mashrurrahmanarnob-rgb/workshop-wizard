@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final results = await Future.wait([
       fs.collection('users').doc(user.uid).get(),
-      fs.collection('registrations').where('userId', isEqualTo: user.uid).count().get(),
+      fs.collection('event_registrations').where('userId', isEqualTo: user.uid).count().get(),
       fs.collection('proposals').where('createdBy', isEqualTo: user.uid).count().get(),
     ]);
 
