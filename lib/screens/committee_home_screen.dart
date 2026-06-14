@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
+import 'notifications_screen.dart';
 
 class CommitteeHomeScreen extends StatefulWidget {
   final String email;
@@ -76,15 +77,7 @@ class _CommitteeHomeScreenState extends State<CommitteeHomeScreen> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardWhite,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-                      ),
-                      child: const Icon(Icons.notifications_outlined, color: AppColors.textMedium, size: 22),
-                    ),
+                    const NotificationBell(color: AppColors.textMedium),
                   ],
                 ),
                 const SizedBox(height: 20),

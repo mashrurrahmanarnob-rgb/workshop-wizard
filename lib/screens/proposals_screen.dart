@@ -9,8 +9,21 @@ import 'package:signature/signature.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 import '../services/activity_service.dart';
+import '../services/notification_service.dart';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+Future<String?> _fetchPresidentUid() async {
+  try {
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'president')
+        .limit(1)
+        .get();
+    return snap.docs.isEmpty ? null : snap.docs.first.id;
+  } catch (_) {
+    return null;
+  }
+}
 
 Color _statusColor(String status) {
   switch (status.toLowerCase()) {
@@ -951,7 +964,19 @@ class _CreateProposalScreenState extends State<CreateProposalScreen> {
         'submittedAt':     asDraft ? null : FieldValue.serverTimestamp(),
       });
 
-      if (!asDraft) await logActivity('Proposal Submitted', _titleCtrl.text.trim());
+      if (!asDraft) {
+        await logActivity('Proposal Submitted', _titleCtrl.text.trim());
+        final presidentUid = await _fetchPresidentUid();
+        if (presidentUid != null) {
+          await sendNotification(
+            userId: presidentUid,
+            title:  'New Proposal Submitted',
+            body:   '"${_titleCtrl.text.trim()}" is awaiting your review.',
+            type:   NotifType.proposalSubmitted,
+          );
+        }
+      }
+
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) _snack('Error: $e');
@@ -1308,6 +1333,15 @@ class _EditProposalScreenState extends State<EditProposalScreen> {
         'submittedAt':     FieldValue.serverTimestamp(),
       });
       await logActivity('Proposal Submitted', _titleCtrl.text.trim());
+      final presidentUid = await _fetchPresidentUid();
+      if (presidentUid != null) {
+        await sendNotification(
+          userId: presidentUid,
+          title:  'New Proposal Submitted',
+          body:   '"${_titleCtrl.text.trim()}" is awaiting your review.',
+          type:   NotifType.proposalSubmitted,
+        );
+      }
       if (mounted) {
         _snack('Proposal submitted for review');
         Navigator.pop(context); // pop edit
@@ -1820,6 +1854,16 @@ class _PresidentProposalCard extends StatelessWidget {
       });
       await batch.commit();
       await logActivity('Proposal Approved', '${data['title']} — event created');
+      final submitterUid = data['createdBy'] as String? ?? '';
+      if (submitterUid.isNotEmpty) {
+        await sendNotification(
+          userId: submitterUid,
+          title:  'Proposal Approved! 🎉',
+          body:   '"${data['title']}" has been approved. An event has been created automatically.',
+          type:   NotifType.proposalApproved,
+          extra:  {'proposalId': id},
+        );
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Proposal approved and event created')),
@@ -1862,12 +1906,25 @@ class _PresidentProposalCard extends StatelessWidget {
     );
     if (confirm != true) return;
     try {
+      final reason = reasonCtrl.text.trim();
       await FirebaseFirestore.instance.collection('proposals').doc(id).update({
         'status': 'rejected',
-        'rejectionReason': reasonCtrl.text.trim(),
+        'rejectionReason': reason,
         'rejectedAt': FieldValue.serverTimestamp(),
       });
       await logActivity('Proposal Rejected', data['title'] ?? '');
+      final submitterUid = data['createdBy'] as String? ?? '';
+      if (submitterUid.isNotEmpty) {
+        await sendNotification(
+          userId: submitterUid,
+          title:  'Proposal Rejected',
+          body:   reason.isNotEmpty
+              ? '"${data['title']}" was rejected. Reason: $reason'
+              : '"${data['title']}" has been rejected by the president.',
+          type:   NotifType.proposalRejected,
+          extra:  {'proposalId': id},
+        );
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Proposal rejected')),

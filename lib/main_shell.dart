@@ -4,13 +4,13 @@ import 'screens/proposals_screen.dart';
 import 'screens/payments_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/student_home_screen.dart';
-import 'screens/events_screen.dart';
 import 'screens/president_home_screen.dart';
 import 'screens/committee_home_screen.dart';
 import 'screens/treasurer_home_screen.dart';
 import 'screens/role_management_screen.dart';
-import 'screens/submit_feedback_screen.dart';
-import 'screens/feedback_list_screen.dart';
+import 'screens/task_screen.dart';
+import 'screens/performance_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 class _TabConfig {
@@ -67,16 +67,10 @@ class _MainShellState extends State<MainShell> {
             screen: StudentHomeScreen(email: email),
           ),
           _TabConfig(
-            icon: Icons.event_outlined,
-            activeIcon: Icons.event,
-            label: 'Events',
-            screen: EventsScreen(email: email),
-          ),
-          _TabConfig(
-            icon: Icons.chat_bubble_outline,
-            activeIcon: Icons.chat_bubble,
-            label: 'Feedback',
-            screen: SubmitFeedbackScreen(email: email),
+            icon: Icons.notifications_outlined,
+            activeIcon: Icons.notifications,
+            label: 'Alerts',
+            screen: const NotificationsScreen(),
           ),
           profileTab,
         ];
@@ -87,13 +81,13 @@ class _MainShellState extends State<MainShell> {
             icon: Icons.description_outlined,
             activeIcon: Icons.description,
             label: 'Proposals',
-            screen: PresidentProposalsScreen(),
+            screen: const PresidentProposalsScreen(),
           ),
           _TabConfig(
-            icon: Icons.forum_outlined,
-            activeIcon: Icons.forum,
-            label: 'Feedback',
-            screen: const FeedbackListScreen(),
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment,
+            label: 'Tasks',
+            screen: const PresidentTaskScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
@@ -119,10 +113,10 @@ class _MainShellState extends State<MainShell> {
             screen: ProposalsScreen(role: role),
           ),
           _TabConfig(
-            icon: Icons.forum_outlined,
-            activeIcon: Icons.forum,
-            label: 'Feedback',
-            screen: const FeedbackListScreen(),
+            icon: Icons.assignment_outlined,
+            activeIcon: Icons.assignment,
+            label: 'Tasks',
+            screen: const CommitteeTaskScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
