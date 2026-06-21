@@ -174,10 +174,10 @@ class _MemberPerformanceListState extends State<_MemberPerformanceList> {
           .count().get(),
     ]);
 
-    final approved   = (results[0] as AggregateQuerySnapshot).count ?? 0;
-    final totalProps = (results[1] as AggregateQuerySnapshot).count ?? 0;
-    final tasksDone  = (results[2] as AggregateQuerySnapshot).count ?? 0;
-    final totalTasks = (results[3] as AggregateQuerySnapshot).count ?? 0;
+    final approved   = results[0].count ?? 0;
+    final totalProps = results[1].count ?? 0;
+    final tasksDone  = results[2].count ?? 0;
+    final totalTasks = results[3].count ?? 0;
 
     // Score out of 100 — proposals max 50, tasks max 50
     final proposalPts = (approved  * 25).clamp(0, 50);
@@ -219,7 +219,7 @@ class _MemberPerformanceListState extends State<_MemberPerformanceList> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: sorted.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (c, i) => _MemberCard(stats: sorted[i], rank: i + 1),
     );
   }

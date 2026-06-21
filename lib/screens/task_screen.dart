@@ -297,7 +297,7 @@ class _TaskList extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (c, i) {
             final d = docs[i].data() as Map<String, dynamic>;
             return _TaskCard(id: docs[i].id, data: d, role: role);
@@ -696,8 +696,11 @@ class _StatusButtonState extends State<_StatusButton> {
       await logActivity('Task updated', '"$title" → ${widget.targetStatus}');
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1020,7 +1023,7 @@ class _CommitteePicker extends StatelessWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
               itemCount: docs.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
+              separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.divider),
               itemBuilder: (c, i) {
                 final d    = docs[i].data() as Map<String, dynamic>;
                 final name = d['fullName'] as String? ?? '—';

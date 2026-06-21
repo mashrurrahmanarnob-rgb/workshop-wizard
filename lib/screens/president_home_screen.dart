@@ -33,15 +33,15 @@ class _PresidentHomeScreenState extends State<PresidentHomeScreen> {
 
     await Future.wait([
       fs.collection('proposals').where('status', isEqualTo: 'in_review').count().get()
-          .then((s) => pendingProposals  = s.count ?? 0).catchError((_) {}),
+          .then((s) => pendingProposals  = s.count ?? 0).catchError((_) => 0),
       fs.collection('proposals').where('status', isEqualTo: 'approved').count().get()
-          .then((s) => approvedProposals = s.count ?? 0).catchError((_) {}),
+          .then((s) => approvedProposals = s.count ?? 0).catchError((_) => 0),
       fs.collection('users').where('role', whereIn: ['student', 'committee', 'treasurer']).count().get()
-          .then((s) => totalMembers      = s.count ?? 0).catchError((_) {}),
+          .then((s) => totalMembers      = s.count ?? 0).catchError((_) => 0),
       fs.collection('events').where('status', isEqualTo: 'upcoming').count().get()
-          .then((s) => upcomingEvents    = s.count ?? 0).catchError((_) {}),
+          .then((s) => upcomingEvents    = s.count ?? 0).catchError((_) => 0),
       fs.collection('tasks').where('status', whereIn: ['To Do', 'In Progress']).count().get()
-          .then((s) => pendingTasks      = s.count ?? 0).catchError((_) {}),
+          .then((s) => pendingTasks      = s.count ?? 0).catchError((_) => 0),
     ]);
 
     return {
