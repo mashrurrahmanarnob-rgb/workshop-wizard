@@ -42,11 +42,12 @@ class AppBottomNavBar extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: tabs.asMap().entries.map((entry) {
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final estimatedWidth = tabs.length * 72.0; // approx min width per tab
+              final fits = estimatedWidth <= constraints.maxWidth;
+
+              final navItems = tabs.asMap().entries.map((entry) {
                 final i = entry.key;
                 final tab = entry.value;
                 return _NavItem(
@@ -55,9 +56,25 @@ class AppBottomNavBar extends StatelessWidget {
                   label: tab.label,
                   isActive: currentIndex == i,
                   onTap: () => onTap(i),
+                  compact: tabs.length > 4,
                 );
-              }).toList(),
-            ),
+              }).toList();
+
+              if (fits) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: navItems,
+                );
+              }
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: navItems,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -71,6 +88,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final bool compact;
 
   const _NavItem({
     required this.icon,
@@ -78,6 +96,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
@@ -91,7 +110,7 @@ class _NavItem extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 16, vertical: 6),
             decoration: BoxDecoration(
               color: isActive
                   ? AppColors.primary.withValues(alpha: 0.12)
