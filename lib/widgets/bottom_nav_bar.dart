@@ -42,19 +42,22 @@ class AppBottomNavBar extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: tabs.asMap().entries.map((entry) {
-              final i = entry.key;
-              final tab = entry.value;
-              return _NavItem(
-                icon: tab.icon,
-                activeIcon: tab.activeIcon,
-                label: tab.label,
-                isActive: currentIndex == i,
-                onTap: () => onTap(i),
-              );
-            }).toList(),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: tabs.asMap().entries.map((entry) {
+                final i = entry.key;
+                final tab = entry.value;
+                return _NavItem(
+                  icon: tab.icon,
+                  activeIcon: tab.activeIcon,
+                  label: tab.label,
+                  isActive: currentIndex == i,
+                  onTap: () => onTap(i),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),

@@ -9,7 +9,8 @@ import 'screens/committee_home_screen.dart';
 import 'screens/treasurer_home_screen.dart';
 import 'screens/role_management_screen.dart';
 import 'screens/task_screen.dart';
-
+import 'screens/submit_feedback_screen.dart';
+import 'screens/feedback_list_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
@@ -72,6 +73,12 @@ class _MainShellState extends State<MainShell> {
             label: 'Alerts',
             screen: const NotificationsScreen(),
           ),
+          _TabConfig(
+            icon: Icons.chat_bubble_outline,
+            activeIcon: Icons.chat_bubble,
+            label: 'Feedback',
+            screen: SubmitFeedbackScreen(email: email),
+          ),
           profileTab,
         ];
 
@@ -88,6 +95,12 @@ class _MainShellState extends State<MainShell> {
             activeIcon: Icons.assignment,
             label: 'Tasks',
             screen: const PresidentTaskScreen(),
+          ),
+          _TabConfig(
+            icon: Icons.forum_outlined,
+            activeIcon: Icons.forum,
+            label: 'Feedback',
+            screen: const FeedbackListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
@@ -117,6 +130,12 @@ class _MainShellState extends State<MainShell> {
             activeIcon: Icons.assignment,
             label: 'Tasks',
             screen: const CommitteeTaskScreen(),
+          ),
+          _TabConfig(
+            icon: Icons.forum_outlined,
+            activeIcon: Icons.forum,
+            label: 'Feedback',
+            screen: const FeedbackListScreen(),
           ),
           _TabConfig(
             icon: Icons.home_outlined,
