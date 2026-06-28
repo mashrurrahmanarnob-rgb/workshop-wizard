@@ -419,17 +419,18 @@ body {
 /* ===== Screenshots ===== */
 .screenshots-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
   margin-bottom: 24px;
 }
 
 .screenshot-item {
   background: var(--text-dark);
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   transition: var(--transition);
+  text-align: center;
 }
 
 .screenshot-item:hover {
@@ -441,33 +442,13 @@ body {
   display: block;
 }
 
-.screenshot-item.placeholder {
-  aspect-ratio: 9/19;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px dashed rgba(255, 255, 255, 0.25);
-  min-height: 360px;
-}
-
-.screenshot-item.placeholder span {
-  color: rgba(255, 255, 255, 0.6);
+.screenshot-caption {
+  display: block;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 600;
-  text-align: center;
-  padding: 20px;
-}
-
-.screenshot-note {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.95rem;
-}
-
-.screenshot-note code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* ===== Roles ===== */
@@ -601,6 +582,22 @@ body {
 .team-desc {
   color: var(--text-medium);
   font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.team-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.team-email:hover {
+  color: var(--primary-dark);
 }
 
 /* ===== CTA Section ===== */
@@ -674,6 +671,16 @@ body {
 
 .contact-card a:hover {
   color: var(--primary);
+}
+
+.contact-extra {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.contact-extra a {
+  color: var(--text-light);
 }
 
 /* ===== Placeholder Text ===== */
@@ -752,9 +759,12 @@ body {
 @media (max-width: 1024px) {
   .features-grid,
   .roles-grid,
-  .team-grid,
-  .screenshots-grid {
+  .team-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .screenshots-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .hero h1 {
